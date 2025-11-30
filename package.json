@@ -41,7 +41,6 @@
     "input-otp": "^1.4.2",
     "jodit": "^4.6.2",
     "jodit-react": "^5.2.19",
-    "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",

@@ -30,6 +30,7 @@ import Image from 'next/image';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
+import { removeToken } from '../../utils/storage';
 
 type SidebarSubItem = {
   name: string;
@@ -95,6 +96,11 @@ export default function MainlandSidebar() {
   };
 
   const isExpanded = (itemName: string) => expandedItems.includes(itemName);
+
+
+  const handleLogout = () => {
+    removeToken();
+  }
 
   return (
     <Sidebar className="border-none">
@@ -182,6 +188,7 @@ export default function MainlandSidebar() {
         {/* Logout Button */}
         <div className="px-0 pb-6">
           <SidebarMenuButton
+            onClick={handleLogout}
             asChild
             className="h-12 px-6 rounded-none text-gray-300 hover:bg-[#3d2a3e] hover:text-white transition-all duration-200 border-l-4 border-transparent"
           >
