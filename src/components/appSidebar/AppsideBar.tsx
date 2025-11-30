@@ -51,7 +51,7 @@ const sidebars: SidebarItem[] = [
   { name: "Category", path: "/category", icon: Users },
   { name: "Sub Category", path: "/subCategory", icon: Users },
   { name: "Brand", path: "/brand", icon: Users },
-  { name: "Slider", path: "/slider", icon: Users },
+  // { name: "Slider", path: "/slider", icon: Users },
   { name: "Faq", path: "/faq", icon: Users },
   { name: "Transaction", path: "/transaction", icon: Wallet },
   {
