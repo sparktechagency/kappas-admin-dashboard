@@ -38,10 +38,9 @@ interface ApiError {
 
 const BannerList = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
+  console.log(setSearchTerm)
   const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [bannerToDelete, setBannerToDelete] = useState<number | null>(null);
   const [bannerToEdit, setBannerToEdit] = useState<{ index: number, url: string } | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [bannerImagePreview, setBannerImagePreview] = useState<string | null>(null);
@@ -84,11 +83,11 @@ const BannerList = () => {
     return imagePath;
   };
 
-  const handleAddBanner = () => {
-    setBannerImage(null);
-    setBannerImagePreview(null);
-    setAddDialogOpen(true);
-  };
+  // const handleAddBanner = () => {
+  //   setBannerImage(null);
+  //   setBannerImagePreview(null);
+  //   setAddDialogOpen(true);
+  // };
 
   const handleEditBanner = (index: number, bannerUrl: string) => {
     setBannerToEdit({ index, url: bannerUrl });
@@ -105,36 +104,36 @@ const BannerList = () => {
     setActiveTab('logo');
   };
 
-  const handleDeleteClick = (index: number) => {
-    setBannerToDelete(index);
-    setDeleteDialogOpen(true);
-  };
+  // const handleDeleteClick = (index: number) => {
+  //   setBannerToDelete(index);
+  //   setDeleteDialogOpen(true);
+  // };
 
-  const confirmDelete = async () => {
-    if (bannerToDelete === null) return;
+  // const confirmDelete = async () => {
+  //   if (bannerToDelete === null) return;
 
-    try {
-      const currentBanners = [...bannerList];
-      currentBanners.splice(bannerToDelete, 1);
+  //   try {
+  //     const currentBanners = [...bannerList];
+  //     currentBanners.splice(bannerToDelete, 1);
 
-      const formData = new FormData();
-      const updateData = {
-        banner: currentBanners
-      };
+  //     const formData = new FormData();
+  //     const updateData = {
+  //       banner: currentBanners
+  //     };
 
-      formData.append('data', JSON.stringify(updateData));
+  //     formData.append('data', JSON.stringify(updateData));
 
-      await updateBannerLogo(formData).unwrap();
-      toast.success('Banner deleted successfully');
-      setDeleteDialogOpen(false);
-      setBannerToDelete(null);
-      refetch();
-    } catch (error: unknown) {
-      console.error('Delete error:', error);
-      const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to delete banner');
-    }
-  };
+  //     await updateBannerLogo(formData).unwrap();
+  //     toast.success('Banner deleted successfully');
+  //     setDeleteDialogOpen(false);
+  //     setBannerToDelete(null);
+  //     refetch();
+  //   } catch (error: unknown) {
+  //     console.error('Delete error:', error);
+  //     const apiError = error as ApiError;
+  //     toast.error(apiError?.data?.message || 'Failed to delete banner');
+  //   }
+  // };
 
   const handleAddBannerSubmit = async () => {
     if (!bannerImage) {
