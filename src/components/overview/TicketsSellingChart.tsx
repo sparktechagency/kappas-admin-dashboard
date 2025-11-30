@@ -9,6 +9,7 @@ interface PieData {
   name: string;
   value: number;
   color: string;
+  [key: string]: any; // Add index signature to fix the TypeScript error
 }
 
 interface TooltipProps {
