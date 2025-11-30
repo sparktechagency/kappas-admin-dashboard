@@ -60,15 +60,23 @@ type VendorData = {
 const VendorList = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit] = useState<number>(10); // You can make this dynamic if needed
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
   const [vendorToDelete, setVendorToDelete] = useState<VendorData | null>(null);
   const router = useRouter();
 
-  const { data: allVendorData, isLoading, isError } = useGetAllVendorsQuery({});
+  // Pass limit and currentPage to the API query
+  const { data: allVendorData, isLoading, isError } = useGetAllVendorsQuery({
+    limit,
+    page: currentPage
+  });
+
+  console.log("all vendor data", allVendorData)
+
   const [updateToggleStatus, { isLoading: isToggling }] = useToggleVendorStatusMutation();
   const [deleteVendor, { isLoading: isDeleting }] = useDeleteVendorsMutation();
 
-  // Filter vendors based on search term
+  // Filter vendors based on search term (client-side filtering for search)
   const filteredVendors = useMemo(() => {
     if (!allVendorData?.data) return [];
 
@@ -129,6 +137,11 @@ const VendorList = () => {
     return parts.length > 0 ? parts.join(', ') : 'N/A';
   };
 
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -158,6 +171,10 @@ const VendorList = () => {
 
   const pagination = allVendorData.pagination;
   const totalPages = pagination?.totalPage || 1;
+  const totalVendors = pagination?.total || 0;
+
+  // Use filtered vendors for display when searching, otherwise use all vendors from API
+  const vendorsToDisplay = searchTerm ? filteredVendors : allVendorData.data;
 
   return (
     <div className="">
@@ -166,7 +183,7 @@ const VendorList = () => {
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-900">
-              Vendor List ({pagination?.total || 0})
+              Vendor List ({searchTerm ? filteredVendors.length : totalVendors})
             </h1>
 
             <div className="flex items-center gap-3">
@@ -220,7 +237,7 @@ const VendorList = () => {
 
         {/* Table Section */}
         <div className="overflow-x-auto">
-          {filteredVendors.length === 0 ? (
+          {vendorsToDisplay.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               {searchTerm ? 'No vendors found matching your search.' : 'No vendors available.'}
             </div>
@@ -237,7 +254,7 @@ const VendorList = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVendors.map((vendor: VendorData) => (
+                {vendorsToDisplay.map((vendor: VendorData) => (
                   <TableRow key={vendor._id} className="hover:bg-gray-50">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -292,33 +309,35 @@ const VendorList = () => {
           )}
         </div>
 
-        {/* Pagination Section */}
-        <div className="p-4 border-t flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-          >
-            Prev
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        {/* Pagination Section - Only show when not searching */}
+        {!searchTerm && (
+          <div className="p-4 border-t flex items-center justify-end gap-2">
             <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              onClick={() => setCurrentPage(page)}
-              className={currentPage === page ? "bg-red-600 hover:bg-red-700" : ""}
+              variant="outline"
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
             >
-              {page}
+              Prev
             </Button>
-          ))}
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
-        </div>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => handlePageChange(page)}
+                className={currentPage === page ? "bg-red-600 hover:bg-red-700" : ""}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

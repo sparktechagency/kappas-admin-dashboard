@@ -12,10 +12,23 @@ export const vendorApi = baseApi.injectEndpoints({
     }),
 
     getAllVendors: builder.query({
-      query: () => ({
-        url: `/dashboard/vendors`,
-        method: "GET",
-      }),
+      query: ({ limit, page }) => {
+        let url = "/dashboard/vendors";
+
+        // Add conditions
+        if (limit && page) {
+          url += `?limit=${limit}&page=${page}`;
+        } else if (limit) {
+          url += `?limit=${limit}`;
+        } else if (page) {
+          url += `?page=${page}`;
+        }
+
+        return {
+          url,
+          method: "GET",
+        };
+      },
       providesTags: ["vendor"],
     }),
 
