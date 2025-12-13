@@ -23,15 +23,18 @@ import {
   Shield,
   ShoppingBag,
   User,
-  Users,
   Wallet,
 } from "lucide-react";
-import Image from 'next/image';
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
-import { removeToken } from '../../utils/storage';
-
+import { removeToken } from "../../utils/storage";
+import { FaCubes } from "react-icons/fa6";
+import { LiaTshirtSolid } from "react-icons/lia";
+import { FaCube } from "react-icons/fa6";
+import { TfiLayoutSlider } from "react-icons/tfi";
+import { FaQuoteLeft } from "react-icons/fa6";
 type SidebarSubItem = {
   name: string;
   path: string;
@@ -49,29 +52,38 @@ const sidebars: SidebarItem[] = [
   { name: "Overview", path: "/", icon: Grid3x3 },
   { name: "Vendor", path: "/vendor", icon: ShoppingBag },
   { name: "User", path: "/user", icon: User },
-  { name: "Category", path: "/category", icon: Users },
-  { name: "Sub Category", path: "/subCategory", icon: Users },
-  { name: "Brand", path: "/brand", icon: Users },
+  { name: "Category", path: "/category", icon: FaCube },
+  { name: "Sub Category", path: "/subCategory", icon: FaCubes },
+  { name: "Brand", path: "/brand", icon: LiaTshirtSolid },
   // { name: "Slider", path: "/slider", icon: Users },
-  { name: "Faq", path: "/faq", icon: Users },
+  { name: "Faq", path: "/faq", icon: FaQuoteLeft },
   { name: "Transaction", path: "/transaction", icon: Wallet },
   {
     name: "Settings",
     path: "/settings",
     icon: Settings,
     subItems: [
-      { name: "Change Password", path: "/settings/change-password", icon: Lock },
+      {
+        name: "Change Password",
+        path: "/settings/change-password",
+        icon: Lock,
+      },
       { name: "Admin", path: "/settings/admin", icon: Shield },
-    ]
+    ],
   },
   {
     name: "CMS",
     path: "/cms",
     icon: FileText,
     subItems: [
-      { name: "Terms and Conditions", path: "/cms/terms-condition", icon: Shield },
+      {
+        name: "Terms and Conditions",
+        path: "/cms/terms-condition",
+        icon: Shield,
+      },
       { name: "Privacy Policy", path: "/cms/privacy-policy", icon: Shield },
-    ]
+      { name: "Banner", path: "/cms/banner", icon: TfiLayoutSlider },
+    ],
   },
   { name: "Push Notification", path: "/push-notification", icon: Bell },
 ];
@@ -88,19 +100,18 @@ export default function MainlandSidebar() {
   };
 
   const toggleExpand = (itemName: string) => {
-    setExpandedItems(prev =>
+    setExpandedItems((prev) =>
       prev.includes(itemName)
-        ? prev.filter(name => name !== itemName)
+        ? prev.filter((name) => name !== itemName)
         : [...prev, itemName]
     );
   };
 
   const isExpanded = (itemName: string) => expandedItems.includes(itemName);
 
-
   const handleLogout = () => {
     removeToken();
-  }
+  };
 
   return (
     <Sidebar className="border-none">
@@ -109,11 +120,11 @@ export default function MainlandSidebar() {
         <div className="flex items-center justify-start py-6 px-6">
           <div className="flex items-center gap-2">
             <Image
-              src={'/icons/logo.png'}
+              src={"/icons/logo.png"}
               width={300}
               height={10}
-              className='w-full h-10`'
-              alt='The Canuck Mall'
+              className="w-full h-10`"
+              alt="The Canuck Mall"
             />
           </div>
         </div>
@@ -128,31 +139,41 @@ export default function MainlandSidebar() {
                     {item.subItems ? (
                       <SidebarMenuButton
                         onClick={() => toggleExpand(item.name)}
-                        className={`h-12 px-6 rounded-none transition-all duration-200 ${isActive(item.path)
-                          ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
-                          : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
-                          }`}
+                        className={`h-12 px-6 rounded-none transition-all duration-200 ${
+                          isActive(item.path)
+                            ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
+                            : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
+                        }`}
                       >
                         <div className="flex items-center gap-3 w-full">
                           <item.icon className="h-5 w-5 flex-shrink-0" />
-                          <span className="text-sm font-normal flex-1">{item.name}</span>
+                          <span className="text-sm font-normal flex-1">
+                            {item.name}
+                          </span>
                           <ChevronDown
-                            className={`h-4 w-4 transition-transform duration-200 ${isExpanded(item.name) ? "rotate-180" : ""
-                              }`}
+                            className={`h-4 w-4 transition-transform duration-200 ${
+                              isExpanded(item.name) ? "rotate-180" : ""
+                            }`}
                           />
                         </div>
                       </SidebarMenuButton>
                     ) : (
                       <SidebarMenuButton
                         asChild
-                        className={`h-12 px-6 rounded-none transition-all duration-200 ${isActive(item.path)
-                          ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
-                          : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
-                          }`}
+                        className={`h-12 px-6 rounded-none transition-all duration-200 ${
+                          isActive(item.path)
+                            ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
+                            : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
+                        }`}
                       >
-                        <Link href={item.path} className="flex items-center gap-3 w-full">
+                        <Link
+                          href={item.path}
+                          className="flex items-center gap-3 w-full"
+                        >
                           <item.icon className="h-5 w-5 flex-shrink-0" />
-                          <span className="text-sm font-normal">{item.name}</span>
+                          <span className="text-sm font-normal">
+                            {item.name}
+                          </span>
                         </Link>
                       </SidebarMenuButton>
                     )}
@@ -165,14 +186,20 @@ export default function MainlandSidebar() {
                         <SidebarMenuSubItem key={subItem.name} className="px-0">
                           <SidebarMenuSubButton
                             asChild
-                            className={`h-12 px-6 pl-12 rounded-none transition-all duration-200 ${isActive(subItem.path)
-                              ? "bg-[#4a2d3e] text-white hover:bg-[#4a2d3e] border-l-4 border-[#ff5722]"
-                              : "bg-[#3d2535] text-white hover:bg-[#4a2d3e] hover:text-white border-l-4 border-transparent"
-                              }`}
+                            className={`h-12 px-6 pl-12 rounded-none transition-all duration-200 ${
+                              isActive(subItem.path)
+                                ? "bg-[#4a2d3e] text-white hover:bg-[#4a2d3e] border-l-4 border-[#ff5722]"
+                                : "bg-[#3d2535] text-white hover:bg-[#4a2d3e] hover:text-white border-l-4 border-transparent"
+                            }`}
                           >
-                            <Link href={subItem.path} className="flex items-center gap-3 w-full text-white">
+                            <Link
+                              href={subItem.path}
+                              className="flex items-center gap-3 w-full text-white"
+                            >
                               <subItem.icon className="h-4 w-4 flex-shrink-0 side" />
-                              <span className="text-sm font-normal">{subItem.name}</span>
+                              <span className="text-sm font-normal">
+                                {subItem.name}
+                              </span>
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
