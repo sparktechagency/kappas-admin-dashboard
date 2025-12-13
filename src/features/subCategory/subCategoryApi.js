@@ -3,13 +3,20 @@ import { baseApi } from "../../utils/apiBaseQuery";
 const subCategoryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllSubCategory: builder.query({
-      query: () => {
+      query: ({ page = 1, limit = 10, searchTerm = "" }) => {
+        const params = new URLSearchParams();
+
+        if (page) params.append("page", page.toString());
+        if (limit) params.append("limit", limit.toString());
+        if (searchTerm) params.append("searchTerm", searchTerm);
+
+        const queryString = params.toString();
         return {
-          url: `/subcategory`,
+          url: `/subcategory${queryString ? `?${queryString}` : ""}`,
           method: "GET",
         };
       },
-      providesTags: ['subcategory'],
+      providesTags: ["subcategory"],
     }),
 
     getSubCategoryById: builder.query({
@@ -19,7 +26,7 @@ const subCategoryApi = baseApi.injectEndpoints({
           method: "GET",
         };
       },
-      providesTags: ['subcategory'],
+      providesTags: ["subcategory"],
     }),
 
     getSubCategoryReletedToCategory: builder.query({
@@ -29,7 +36,7 @@ const subCategoryApi = baseApi.injectEndpoints({
           method: "GET",
         };
       },
-      providesTags: ['subcategory'],
+      providesTags: ["subcategory"],
     }),
 
     createSubcategory: builder.mutation({
@@ -40,7 +47,7 @@ const subCategoryApi = baseApi.injectEndpoints({
           body: data,
         };
       },
-      invalidatesTags: ['subcategory'],
+      invalidatesTags: ["subcategory"],
     }),
 
     updateSubcategory: builder.mutation({
@@ -51,7 +58,7 @@ const subCategoryApi = baseApi.injectEndpoints({
           body: data,
         };
       },
-      invalidatesTags: ['subcategory'],
+      invalidatesTags: ["subcategory"],
     }),
 
     deleteSubcategory: builder.mutation({
@@ -61,7 +68,7 @@ const subCategoryApi = baseApi.injectEndpoints({
           method: "DELETE",
         };
       },
-      invalidatesTags: ['subcategory'],
+      invalidatesTags: ["subcategory"],
     }),
   }),
   overrideExisting: true,

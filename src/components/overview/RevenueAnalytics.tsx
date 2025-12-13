@@ -1,9 +1,24 @@
 "use client";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMemo, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useRevinueChartsQuery } from '../../features/dashboard/overviewApi';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { useRevinueChartsQuery } from "../../features/dashboard/overviewApi";
 
 type OverviewData = {
   totalRevenue?: number;
@@ -34,16 +49,19 @@ type TooltipProps = {
   }>;
 };
 
-
 type Props = {
   overviewData?: OverviewData;
 };
 
-export default function RevenueAnalytics({ }: Props) {
-  const [selectedYear, setSelectedYear] = useState<string>('2025');
+export default function RevenueAnalytics({}: Props) {
+  const [selectedYear, setSelectedYear] = useState<string>("2025");
 
   // Fetch data from API based on selected year
-  const { data: apiData, isLoading, isError } = useRevinueChartsQuery(selectedYear);
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useRevinueChartsQuery(selectedYear);
 
   // Transform API data to chart format
   const chartData = useMemo(() => {
@@ -53,22 +71,45 @@ export default function RevenueAnalytics({ }: Props) {
 
     // Create a map of all months
     const monthMap: { [key: string]: number } = {
-      '01': 0, '02': 0, '03': 0, '04': 0, '05': 0, '06': 0,
-      '07': 0, '08': 0, '09': 0, '10': 0, '11': 0, '12': 0
+      "01": 0,
+      "02": 0,
+      "03": 0,
+      "04": 0,
+      "05": 0,
+      "06": 0,
+      "07": 0,
+      "08": 0,
+      "09": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
     };
 
     // Fill in the data from API
     apiData.data.monthlyStats.forEach((stat: MonthlyStat) => {
-      const monthKey = stat._id.split('-')[1]; // Extract month from "2025-11"
+      const monthKey = stat._id.split("-")[1]; // Extract month from "2025-11"
       monthMap[monthKey] = stat.totalRevenue || 0;
     });
 
     // Convert to chart format
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
 
     return Object.keys(monthMap).map((monthKey, index) => ({
       month: monthNames[index],
-      revenue: monthMap[monthKey]
+      revenue: monthMap[monthKey],
     }));
   }, [apiData]);
 
@@ -94,7 +135,11 @@ export default function RevenueAnalytics({ }: Props) {
   const CustomDot = (props: CustomDotProps) => {
     const { cx, cy, payload } = props;
     // Highlight the month with maximum revenue
-    if (maxRevenueMonth && payload?.month === maxRevenueMonth.month && payload?.revenue === maxRevenueMonth.revenue) {
+    if (
+      maxRevenueMonth &&
+      payload?.month === maxRevenueMonth.month &&
+      payload?.revenue === maxRevenueMonth.revenue
+    ) {
       return (
         <circle
           cx={cx}
@@ -111,20 +156,32 @@ export default function RevenueAnalytics({ }: Props) {
 
   // Calculate dynamic Y-axis ticks based on data
   const yAxisTicks = useMemo(() => {
-    if (chartData.length === 0) return [0, 2000, 4000, 6000, 8000, 10000, 12000];
+    if (chartData.length === 0)
+      return [0, 2000, 4000, 6000, 8000, 10000, 12000];
 
-    const maxRevenue = Math.max(...chartData.map(d => d.revenue));
+    const maxRevenue = Math.max(...chartData.map((d) => d.revenue));
     const tickCount = 7;
-    const tickInterval = Math.ceil(maxRevenue / (tickCount - 1) / 1000) * 1000;
 
-    return Array.from({ length: tickCount }, (_, i) => i * tickInterval);
+    // Ensure we have a minimum interval to avoid duplicates
+    const tickInterval = Math.max(
+      Math.ceil(maxRevenue / (tickCount - 1) / 1000) * 1000,
+      1000
+    );
+
+    // Generate ticks and filter out duplicates
+    const ticks = Array.from({ length: tickCount }, (_, i) => i * tickInterval);
+
+    // Remove duplicates and ensure unique values
+    return Array.from(new Set(ticks));
   }, [chartData]);
 
   return (
     <div className="w-full">
       <div className="bg-white rounded-2xl shadow-lg p-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Revenue Analytics</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Revenue Analytics
+          </h2>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
             <SelectTrigger className="w-32 bg-white border-gray-200">
               <SelectValue />
@@ -152,26 +209,36 @@ export default function RevenueAnalytics({ }: Props) {
               margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
             >
               <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id="revenueGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset="0%" stopColor="#FCA5A5" stopOpacity={0.4} />
                   <stop offset="100%" stopColor="#FCA5A5" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
 
-              <CartesianGrid strokeDasharray="0" stroke="#f0f0f0" vertical={false} />
+              <CartesianGrid
+                strokeDasharray="0"
+                stroke="#f0f0f0"
+                vertical={false}
+              />
 
               <XAxis
                 dataKey="month"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 13 }}
+                tick={{ fill: "#9ca3af", fontSize: 13 }}
                 dy={10}
               />
 
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 13 }}
+                tick={{ fill: "#9ca3af", fontSize: 13 }}
                 tickFormatter={(value) => `$${value / 1000}k`}
                 ticks={yAxisTicks}
               />
@@ -194,7 +261,12 @@ export default function RevenueAnalytics({ }: Props) {
                 strokeWidth={3}
                 fill="url(#revenueGradient)"
                 dot={<CustomDot />}
-                activeDot={{ r: 6, fill: '#B91C1C', strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{
+                  r: 6,
+                  fill: "#B91C1C",
+                  strokeWidth: 2,
+                  stroke: "#fff",
+                }}
               />
             </AreaChart>
           </ResponsiveContainer>

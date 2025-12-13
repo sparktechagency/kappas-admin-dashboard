@@ -1,8 +1,13 @@
 "use client";
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { LayoutGrid, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LayoutGrid, MoreVertical } from "lucide-react";
+import { useState } from "react";
 
 type Category = {
   categoryName: string;
@@ -19,8 +24,10 @@ type Props = {
 };
 
 export default function TopCategory({ overviewData }: Props) {
-  const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
-  console.log(selectedPeriod)
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "today" | "week" | "month"
+  >("today");
+  console.log(selectedPeriod);
 
   const categories = overviewData?.topCategories || [];
 
@@ -33,23 +40,23 @@ export default function TopCategory({ overviewData }: Props) {
             <div className="bg-red-600 rounded-lg p-2">
               <LayoutGrid className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Top Category</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Top Category
+            </h2>
           </div>
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none">
-              <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                <MoreVertical className="w-5 h-5 text-gray-600" />
-              </button>
+            <DropdownMenuTrigger className="outline-none p-1 hover:bg-gray-100 rounded-lg transition-colors">
+              <MoreVertical className="w-5 h-5 text-gray-600" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => setSelectedPeriod('today')}>
+              <DropdownMenuItem onClick={() => setSelectedPeriod("today")}>
                 Today
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedPeriod('week')}>
+              <DropdownMenuItem onClick={() => setSelectedPeriod("week")}>
                 This week
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedPeriod('month')}>
+              <DropdownMenuItem onClick={() => setSelectedPeriod("month")}>
                 This Month
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -60,16 +67,21 @@ export default function TopCategory({ overviewData }: Props) {
         <div className="space-y-4">
           {categories.length > 0 ? (
             categories.map((category, index) => (
-              <div key={category.categoryId} className="flex items-center justify-between">
+              <div
+                key={category.categoryId}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center gap-3">
                   <div
                     className="w-3 h-3 rounded-full border-2 border-red-600 flex-shrink-0"
                     style={{
-                      backgroundColor: index === 0 ? '#DC2626' : 'transparent',
-                      borderColor: index === 0 ? '#DC2626' : '#DC2626'
+                      backgroundColor: index === 0 ? "#DC2626" : "transparent",
+                      borderColor: index === 0 ? "#DC2626" : "#DC2626",
                     }}
                   ></div>
-                  <span className="text-gray-900 text-sm font-medium">{category.categoryName}</span>
+                  <span className="text-gray-900 text-sm font-medium">
+                    {category.categoryName}
+                  </span>
                 </div>
                 <span className="text-gray-900 text-sm font-semibold">
                   {category.totalProducts} products

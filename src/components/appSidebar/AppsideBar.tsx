@@ -34,6 +34,7 @@ import { FaCubes } from "react-icons/fa6";
 import { LiaTshirtSolid } from "react-icons/lia";
 import { FaCube } from "react-icons/fa6";
 import { TfiLayoutSlider } from "react-icons/tfi";
+import { RiAdvertisementLine } from "react-icons/ri";
 import { FaQuoteLeft } from "react-icons/fa6";
 type SidebarSubItem = {
   name: string;
@@ -83,6 +84,11 @@ const sidebars: SidebarItem[] = [
       },
       { name: "Privacy Policy", path: "/cms/privacy-policy", icon: Shield },
       { name: "Banner", path: "/cms/banner", icon: TfiLayoutSlider },
+      {
+        name: "Advertisement",
+        path: "/cms/advertisement",
+        icon: RiAdvertisementLine,
+      },
     ],
   },
   { name: "Push Notification", path: "/push-notification", icon: Bell },

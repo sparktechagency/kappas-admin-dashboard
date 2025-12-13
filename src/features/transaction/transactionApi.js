@@ -2,12 +2,21 @@ import { baseApi } from "../../utils/apiBaseQuery";
 
 export const transactionApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-
     getAllTransaction: builder.query({
-      query: () => ({
-        url: `/payment/admin`,
-        method: "GET",
-      }),
+      query: ({ page = 1, limit = 10, searchTerm = "", status = "" }) => {
+        const params = new URLSearchParams();
+
+        if (page) params.append("page", page.toString());
+        if (limit) params.append("limit", limit.toString());
+        if (searchTerm) params.append("searchTerm", searchTerm);
+        if (status) params.append("status", status);
+
+        const queryString = params.toString();
+        return {
+          url: `/payment/admin${queryString ? `?${queryString}` : ""}`,
+          method: "GET",
+        };
+      },
       providesTags: ["transaction"],
     }),
 
@@ -24,7 +33,7 @@ export const transactionApi = baseApi.injectEndpoints({
         url: `/payment/admin/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ['transaction'],
+      invalidatesTags: ["transaction"],
     }),
   }),
 });
@@ -33,5 +42,5 @@ export const transactionApi = baseApi.injectEndpoints({
 export const {
   useDeleteTransactionMutation,
   useGetAllTransactionQuery,
-  useGetSingleTransactionQuery
+  useGetSingleTransactionQuery,
 } = transactionApi;

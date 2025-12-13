@@ -3,12 +3,14 @@ import { baseApi } from "../../utils/apiBaseQuery";
 export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllUsers: builder.query({
-      query: ({ status, isRecentUsers, searchTerm }) => {
+      query: ({ status, isRecentUsers, searchTerm, page, limit }) => {
         const params = new URLSearchParams();
 
         if (status) params.append("status", status);
         if (isRecentUsers) params.append("isRecentUsers", isRecentUsers);
         if (searchTerm) params.append("searchTerm", searchTerm);
+        if (page) params.append("page", page.toString());
+        if (limit) params.append("limit", limit.toString());
 
         return {
           url: `/users/admin/all-users?${params.toString()}`,
@@ -30,11 +32,10 @@ export const usersApi = baseApi.injectEndpoints({
       query: ({ data, id }) => ({
         url: `/users/admin/${id}`,
         method: "PATCH",
-        body: data
+        body: data,
       }),
       invalidatesTags: ["Users"],
     }),
-
   }),
 });
 
@@ -42,5 +43,5 @@ export const usersApi = baseApi.injectEndpoints({
 export const {
   useGetAllUsersQuery,
   useDeleteUserMutation,
-  useUpdateStatusByUserMutation
+  useUpdateStatusByUserMutation,
 } = usersApi;

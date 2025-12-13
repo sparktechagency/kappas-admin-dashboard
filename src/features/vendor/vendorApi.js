@@ -2,7 +2,6 @@ import { baseApi } from "../../utils/apiBaseQuery";
 
 export const vendorApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-
     getAllVendorsState: builder.query({
       query: () => ({
         url: `/dashboard/vendors/stats`,
@@ -12,17 +11,21 @@ export const vendorApi = baseApi.injectEndpoints({
     }),
 
     getAllVendors: builder.query({
-      query: ({ limit, page }) => {
-        let url = "/dashboard/vendors";
+      query: ({ limit, page, province }) => {
+        const params = new URLSearchParams();
 
-        // Add conditions
-        if (limit && page) {
-          url += `?limit=${limit}&page=${page}`;
-        } else if (limit) {
-          url += `?limit=${limit}`;
-        } else if (page) {
-          url += `?page=${page}`;
+        if (province) {
+          params.append("province", province.toLowerCase());
         }
+        if (limit) {
+          params.append("limit", limit.toString());
+        }
+        if (page) {
+          params.append("page", page.toString());
+        }
+
+        const queryString = params.toString();
+        const url = `/dashboard/vendors${queryString ? `?${queryString}` : ""}`;
 
         return {
           url,
@@ -36,7 +39,7 @@ export const vendorApi = baseApi.injectEndpoints({
       query: (id) => ({
         url: `/dashboard/vendors/status/${id}`,
         method: "PATCH",
-        body: {}
+        body: {},
       }),
       invalidatesTags: ["vendor"],
     }),
@@ -56,7 +59,6 @@ export const vendorApi = baseApi.injectEndpoints({
       }),
       providesTags: ["vendor"],
     }),
-
 
     getStoreState: builder.query({
       query: (id) => ({
@@ -89,9 +91,6 @@ export const vendorApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["vendor"],
     }),
-
-
-
   }),
 });
 
