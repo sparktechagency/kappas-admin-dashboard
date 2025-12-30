@@ -6,19 +6,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { useUpdateMaintainanceMutation } from "@/features/maintanance/maintananceApi";
+import { useGetMaintainanceQuery, useUpdateMaintainanceMutation } from "@/features/maintanance/maintananceApi";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { AlertTriangle, CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, Calendar as CalendarIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from 'react-hot-toast';
-;
+import CustomLoading from '../../../../components/Loading/CustomLoading';
 
 const Page = () => {
+  const { data, isLoading: isMaintanceLoading } = useGetMaintainanceQuery({});
   const [MaintanceDate, { isLoading }] = useUpdateMaintainanceMutation();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isEnabled, setIsEnabled] = useState(false);
 
+  // Set default values from API response
+  useEffect(() => {
+    if (data?.data?.isUnderMaintenance !== undefined) {
+      setIsEnabled(data.data.isUnderMaintenance.status);
+
+      // Set the date if endAt exists
+      if (data.data.isUnderMaintenance.endAt) {
+        setSelectedDate(new Date(data.data.isUnderMaintenance.endAt));
+      }
+    }
+  }, [data]);
 
   const handleToggle = async (checked: boolean) => {
     try {
@@ -33,14 +45,14 @@ const Page = () => {
           endAt: format(selectedDate, "yyyy-MM-dd"),
         }).unwrap();
         setIsEnabled(true);
-        toast.success(`Maintenance Mode Enabled System will be under maintenance until ${format(selectedDate, "PPP")}`);
+        toast.success(`Maintenance Mode Enabled. System will be under maintenance until ${format(selectedDate, "PPP")}`);
       } else {
         // Turning OFF - no date needed
         await MaintanceDate({
           isUnderMaintenance: false,
         }).unwrap();
-        setIsEnabled(false)
-        toast.success("Maintenance Mode Disabled System is now accessible to users")
+        setIsEnabled(false);
+        toast.success("Maintenance Mode Disabled. System is now accessible to users");
       }
     } catch (error) {
       console.error("Failed to update maintenance mode:", error);
@@ -48,10 +60,16 @@ const Page = () => {
     }
   };
 
+  if (isMaintanceLoading) {
+    return (
+      <CustomLoading />
+    )
+  }
+
   return (
     <div className="flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl rounded shadow-2xl bg-red-50 pt-4">
-        <CardHeader className="space-y-4  border-red-500 ">
+        <CardHeader className="space-y-4 border-red-500">
           <div className="flex items-center justify-center">
             <div className="p-3 bg-red-100 rounded-full">
               <AlertTriangle className="w-8 h-8 text-red-600" />

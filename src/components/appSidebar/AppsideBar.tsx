@@ -19,24 +19,22 @@ import {
   Grid3x3,
   Lock,
   LogOut,
+  Notebook,
   Settings,
   Shield,
   ShoppingBag,
   User,
-  Wallet,
-  Notebook
+  Wallet
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
-import { removeToken } from "../../utils/storage";
-import { FaCubes } from "react-icons/fa6";
+import { FaCube, FaCubes, FaQuoteLeft } from "react-icons/fa6";
 import { LiaTshirtSolid } from "react-icons/lia";
-import { FaCube } from "react-icons/fa6";
-import { TfiLayoutSlider } from "react-icons/tfi";
 import { RiAdvertisementLine } from "react-icons/ri";
-import { FaQuoteLeft } from "react-icons/fa6";
+import { TfiLayoutSlider } from "react-icons/tfi";
+import { removeToken } from "../../utils/storage";
 type SidebarSubItem = {
   name: string;
   path: string;
@@ -71,12 +69,8 @@ const sidebars: SidebarItem[] = [
         icon: Lock,
       },
       { name: "Admin", path: "/settings/admin", icon: Shield },
-<<<<<<< HEAD
       { name: "Maintanance", path: "/settings/maintanance", icon: Notebook },
     ]
-=======
-    ],
->>>>>>> 6e9758a4150d8224dc506431964096fbbb6a2329
   },
   {
     name: "CMS",
@@ -151,38 +145,35 @@ export default function MainlandSidebar() {
                     {item.subItems ? (
                       <SidebarMenuButton
                         onClick={() => toggleExpand(item.name)}
-                        className={`h-12 px-6 rounded-none transition-all duration-200 ${
-                          isActive(item.path)
+                        className={`h-12 px-6 rounded-none transition-all duration-200 ${isActive(item.path)
                             ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
                             : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3 w-full">
-                          <item.icon className="h-5 w-5 flex-shrink-0" />
+                          <item.icon className="h-5 w-5 shrink-0" />
                           <span className="text-sm font-normal flex-1">
                             {item.name}
                           </span>
                           <ChevronDown
-                            className={`h-4 w-4 transition-transform duration-200 ${
-                              isExpanded(item.name) ? "rotate-180" : ""
-                            }`}
+                            className={`h-4 w-4 transition-transform duration-200 ${isExpanded(item.name) ? "rotate-180" : ""
+                              }`}
                           />
                         </div>
                       </SidebarMenuButton>
                     ) : (
                       <SidebarMenuButton
                         asChild
-                        className={`h-12 px-6 rounded-none transition-all duration-200 ${
-                          isActive(item.path)
+                        className={`h-12 px-6 rounded-none transition-all duration-200 ${isActive(item.path)
                             ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
                             : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
-                        }`}
+                          }`}
                       >
                         <Link
                           href={item.path}
                           className="flex items-center gap-3 w-full"
                         >
-                          <item.icon className="h-5 w-5 flex-shrink-0" />
+                          <item.icon className="h-5 w-5 shrink-0" />
                           <span className="text-sm font-normal">
                             {item.name}
                           </span>
@@ -198,17 +189,16 @@ export default function MainlandSidebar() {
                         <SidebarMenuSubItem key={subItem.name} className="px-0">
                           <SidebarMenuSubButton
                             asChild
-                            className={`h-12 px-6 pl-12 rounded-none transition-all duration-200 ${
-                              isActive(subItem.path)
+                            className={`h-12 px-6 pl-12 rounded-none transition-all duration-200 ${isActive(subItem.path)
                                 ? "bg-[#4a2d3e] text-white hover:bg-[#4a2d3e] border-l-4 border-[#ff5722]"
                                 : "bg-[#3d2535] text-white hover:bg-[#4a2d3e] hover:text-white border-l-4 border-transparent"
-                            }`}
+                              }`}
                           >
                             <Link
                               href={subItem.path}
                               className="flex items-center gap-3 w-full text-white"
                             >
-                              <subItem.icon className="h-4 w-4 flex-shrink-0 side" />
+                              <subItem.icon className="h-4 w-4 shrink-0 side" />
                               <span className="text-sm font-normal">
                                 {subItem.name}
                               </span>
@@ -232,7 +222,7 @@ export default function MainlandSidebar() {
             className="h-12 px-6 rounded-none text-gray-300 hover:bg-[#3d2a3e] hover:text-white transition-all duration-200 border-l-4 border-transparent"
           >
             <Link href="/auth/login" className="flex items-center gap-3 w-full">
-              <LogOut className="h-5 w-5 flex-shrink-0" />
+              <LogOut className="h-5 w-5 shrink-0" />
               <span className="text-sm font-normal">Logout</span>
             </Link>
           </SidebarMenuButton>
