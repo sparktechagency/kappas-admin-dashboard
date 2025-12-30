@@ -1,6 +1,6 @@
 "use client";
 
-import Cookies from 'js-cookie';
+
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -113,12 +113,12 @@ export default function LoginPage() {
           console.error('Could not decode token or missing ID');
         }
 
-        // Set cookie with proper options
-        Cookies.set("adminToken", accessToken, {
-          expires: rememberMe ? 7 : 1, // 7 days if remember me is checked, otherwise 1 day
-          sameSite: "strict",
-          secure: process.env.NODE_ENV === 'production',
-        });
+        // // Set cookie with proper options
+        // Cookies.set("adminToken", accessToken, {
+        //   expires: rememberMe ? 7 : 1, // 7 days if remember me is checked, otherwise 1 day
+        //   sameSite: "strict",
+        //   secure: process.env.NODE_ENV === 'production',
+        // });
 
         saveToken(accessToken);
 
@@ -162,6 +162,8 @@ export default function LoginPage() {
       handleSubmit();
     }
   };
+
+  //jsdfjj
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fef5f0] p-4">

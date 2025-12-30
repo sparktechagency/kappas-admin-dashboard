@@ -9,17 +9,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -27,15 +27,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Eye, Search, Store, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+} from "@/components/ui/table";
+import { Eye, Search, Store, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import {
   useDeleteVendorsMutation,
   useGetAllVendorsQuery,
-  useToggleVendorStatusMutation
-} from '../../features/vendor/vendorApi';
+  useToggleVendorStatusMutation,
+} from "../../features/vendor/vendorApi";
 
 type VendorData = {
   _id: string;
@@ -57,18 +57,52 @@ type VendorData = {
   email: string;
 };
 
+const PROVINCES = [
+  "Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Northwest Territories",
+  "Nova Scotia",
+  "Nunavut",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+  "Yukon",
+];
+
 const VendorList = () => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit] = useState<number>(10);
+  const [selectedProvince, setSelectedProvince] = useState<string>("all");
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
   const [vendorToDelete, setVendorToDelete] = useState<VendorData | null>(null);
   const router = useRouter();
 
-  const { data: allVendorData, isLoading, isError } = useGetAllVendorsQuery({});
-  const [updateToggleStatus, { isLoading: isToggling }] = useToggleVendorStatusMutation();
+  // Pass limit, currentPage, and province to the API query
+  const {
+    data: allVendorData,
+    isLoading,
+    isError,
+  } = useGetAllVendorsQuery({
+    limit,
+    page: currentPage,
+    province:
+      selectedProvince && selectedProvince !== "all"
+        ? selectedProvince
+        : undefined,
+  });
+
+  console.log("all vendor data", allVendorData);
+
+  const [updateToggleStatus, { isLoading: isToggling }] =
+    useToggleVendorStatusMutation();
   const [deleteVendor, { isLoading: isDeleting }] = useDeleteVendorsMutation();
 
-  // Filter vendors based on search term
+  // Filter vendors based on search term (client-side filtering for search)
   const filteredVendors = useMemo(() => {
     if (!allVendorData?.data) return [];
 
@@ -78,7 +112,7 @@ const VendorList = () => {
         vendor.name.toLowerCase().includes(searchLower) ||
         vendor.email.toLowerCase().includes(searchLower) ||
         vendor.phone.includes(searchTerm) ||
-        (vendor.owner?.email?.toLowerCase().includes(searchLower))
+        vendor.owner?.email?.toLowerCase().includes(searchLower)
       );
     });
   }, [allVendorData, searchTerm]);
@@ -87,7 +121,7 @@ const VendorList = () => {
     try {
       await updateToggleStatus(vendorId).unwrap();
     } catch (error) {
-      console.error('Failed to toggle vendor status:', error);
+      console.error("Failed to toggle vendor status:", error);
     }
   };
 
@@ -104,9 +138,9 @@ const VendorList = () => {
     if (vendorToDelete) {
       try {
         await deleteVendor(vendorToDelete._id).unwrap();
-        console.log('Vendor deleted successfully');
+        console.log("Vendor deleted successfully");
       } catch (error) {
-        console.error('Failed to delete vendor:', error);
+        console.error("Failed to delete vendor:", error);
       }
     }
     setDeleteModalOpen(false);
@@ -118,15 +152,26 @@ const VendorList = () => {
     setVendorToDelete(null);
   };
 
-  const formatAddress = (address?: VendorData['address']) => {
-    if (!address) return 'N/A';
+  const formatAddress = (address?: VendorData["address"]) => {
+    if (!address) return "N/A";
     const parts = [
       address.detail_address,
       address.city,
       address.province,
-      address.country
+      address.country,
     ].filter(Boolean);
-    return parts.length > 0 ? parts.join(', ') : 'N/A';
+    return parts.length > 0 ? parts.join(", ") : "N/A";
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when province changes
+  const handleProvinceChange = (province: string) => {
+    setSelectedProvince(province);
+    setCurrentPage(1);
   };
 
   // Loading state
@@ -158,6 +203,10 @@ const VendorList = () => {
 
   const pagination = allVendorData.pagination;
   const totalPages = pagination?.totalPage || 1;
+  const totalVendors = pagination?.total || 0;
+
+  // Use filtered vendors for display when searching, otherwise use all vendors from API
+  const vendorsToDisplay = searchTerm ? filteredVendors : allVendorData.data;
 
   return (
     <div className="">
@@ -166,41 +215,24 @@ const VendorList = () => {
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-900">
-              Vendor List ({pagination?.total || 0})
+              Vendor List ({searchTerm ? filteredVendors.length : totalVendors})
             </h1>
 
             <div className="flex items-center gap-3">
-              <Select>
+              <Select
+                value={selectedProvince}
+                onValueChange={handleProvinceChange}
+              >
                 <SelectTrigger className="w-[180px] bg-white">
                   <SelectValue placeholder="Select Province" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="on">Ontario</SelectItem>
-                  <SelectItem value="qc">Quebec</SelectItem>
-                  <SelectItem value="bc">British Columbia</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select>
-                <SelectTrigger className="w-[180px] bg-white">
-                  <SelectValue placeholder="Select Territory" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="north">North</SelectItem>
-                  <SelectItem value="south">South</SelectItem>
-                  <SelectItem value="east">East</SelectItem>
-                  <SelectItem value="west">West</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select>
-                <SelectTrigger className="w-[180px] bg-white">
-                  <SelectValue placeholder="Select City" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="toronto">Toronto</SelectItem>
-                  <SelectItem value="ottawa">Ottawa</SelectItem>
-                  <SelectItem value="vancouver">Vancouver</SelectItem>
+                  <SelectItem value="all">All Provinces</SelectItem>
+                  {PROVINCES.map((province) => (
+                    <SelectItem key={province} value={province}>
+                      {province}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -220,38 +252,54 @@ const VendorList = () => {
 
         {/* Table Section */}
         <div className="overflow-x-auto">
-          {filteredVendors.length === 0 ? (
+          {vendorsToDisplay.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
-              {searchTerm ? 'No vendors found matching your search.' : 'No vendors available.'}
+              {searchTerm
+                ? "No vendors found matching your search."
+                : "No vendors available."}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
-                  <TableHead className="font-semibold text-gray-700">Store Name</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Owner Email</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Contact</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Address</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Action</TableHead>
+                  <TableHead className="font-semibold text-gray-700">
+                    Store Name
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
+                    Owner Email
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
+                    Contact
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
+                    Address
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
+                    Status
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">
+                    Action
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVendors.map((vendor: VendorData) => (
+                {vendorsToDisplay.map((vendor: VendorData) => (
                   <TableRow key={vendor._id} className="hover:bg-gray-50">
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
                           <Store className="w-4 h-4 text-purple-600" />
                         </div>
-                        <span className="font-medium text-gray-900">{vendor.name}</span>
+                        <span className="font-medium text-gray-900">
+                          {vendor.name}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {vendor.owner?.email || vendor.email || 'N/A'}
+                      {vendor.owner?.email || vendor.email || "N/A"}
                     </TableCell>
                     <TableCell className="text-gray-700">
-                      {vendor.owner?.phone || vendor.phone || 'N/A'}
+                      {vendor.owner?.phone || vendor.phone || "N/A"}
                     </TableCell>
                     <TableCell className="text-gray-700">
                       {formatAddress(vendor.address)}
@@ -292,33 +340,39 @@ const VendorList = () => {
           )}
         </div>
 
-        {/* Pagination Section */}
-        <div className="p-4 border-t flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-          >
-            Prev
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        {/* Pagination Section - Only show when not searching */}
+        {!searchTerm && (
+          <div className="p-4 border-t flex items-center justify-end gap-2">
             <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              onClick={() => setCurrentPage(page)}
-              className={currentPage === page ? "bg-red-600 hover:bg-red-700" : ""}
+              variant="outline"
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
             >
-              {page}
+              Prev
             </Button>
-          ))}
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
-        </div>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => handlePageChange(page)}
+                className={
+                  currentPage === page ? "bg-red-600 hover:bg-red-700" : ""
+                }
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              onClick={() =>
+                handlePageChange(Math.min(totalPages, currentPage + 1))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -327,8 +381,10 @@ const VendorList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the vendor
-              {vendorToDelete && ` "${vendorToDelete.name}"`} and remove all associated data.
+              This action cannot be undone. This will permanently delete the
+              vendor
+              {vendorToDelete && ` "${vendorToDelete.name}"`} and remove all
+              associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -340,7 +396,7 @@ const VendorList = () => {
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

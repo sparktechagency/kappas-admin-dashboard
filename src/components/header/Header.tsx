@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGetAllNotificationsQuery, useReadSingleNotificationMutation } from '../../features/notifications/notifications';
 import { useGetProfileQuery } from '../../features/profile/profileApi';
 import { baseURL } from '../../utils/BaseURL';
+import { removeToken } from '../../utils/storage';
 
 interface Notification {
   _id: string;
@@ -88,6 +89,7 @@ export default function MainlandHeader() {
   const handleLogout = () => {
     console.log("Logging out...");
     setIsDropdownOpen(false);
+    removeToken();
     router.push("/auth/login");
   };
 

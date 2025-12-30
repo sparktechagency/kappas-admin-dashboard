@@ -9,27 +9,27 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Edit, Plus, Search, Trash2, Upload } from 'lucide-react';
-import Image from 'next/image';
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Edit, Plus, Search, Trash2, Upload } from "lucide-react";
+import Image from "next/image";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   useCreateBrandMutation,
   useDeleteBrandMutation,
   useGetAllBrandQuery,
-  useUpdateCetgoryMutation
-} from '../../../features/brand/brandApi';
-import { baseURL } from '../../../utils/BaseURL';
+  useUpdateCetgoryMutation,
+} from "../../../features/brand/brandApi";
+import { baseURL } from "../../../utils/BaseURL";
 
 interface Brand {
   _id: string;
@@ -62,16 +62,20 @@ interface ApiError {
 }
 
 const BrandList = () => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [limit] = useState<number>(10);
   const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [brandToDelete, setBrandToDelete] = useState<string | null>(null);
   const [brandToEdit, setBrandToEdit] = useState<Brand | null>(null);
-  const [brandName, setBrandName] = useState<string>('');
+  const [brandName, setBrandName] = useState<string>("");
   const [brandImage, setBrandImage] = useState<File | null>(null);
-  const [brandImagePreview, setBrandImagePreview] = useState<string | null>(null);
+  const [brandImagePreview, setBrandImagePreview] = useState<string | null>(
+    null
+  );
   const [isClient, setIsClient] = useState<boolean>(false);
 
   // Set isClient to true after component mounts
@@ -79,8 +83,26 @@ const BrandList = () => {
     setIsClient(true);
   }, []);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
   // API Hooks
-  const { data, isLoading, isError, error } = useGetAllBrandQuery({});
+  const { data, isLoading, isError, error } = useGetAllBrandQuery({
+    page: currentPage,
+    limit: limit,
+    searchTerm: debouncedSearchTerm,
+  });
 
   const [createBrand, { isLoading: isCreating }] = useCreateBrandMutation();
   const [updateBrand, { isLoading: isUpdating }] = useUpdateCetgoryMutation();
@@ -90,30 +112,29 @@ const BrandList = () => {
   const apiData = data as BrandApiResponse | undefined;
 
   // Memoize brands to fix the useMemo dependency warning
-  const brands = useMemo(() => apiData?.data?.result || [], [apiData?.data?.result]);
-  const meta = apiData?.data?.meta;
-
-  // Client-side filtering as fallback - only on client side
-  const filteredBrands = useMemo(() => {
-    if (!isClient) return brands;
-    if (!searchTerm) return brands;
-    return brands.filter((brand) =>
-      brand.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [brands, searchTerm, isClient]);
+  const brands = useMemo(
+    () => apiData?.data?.result || [],
+    [apiData?.data?.result]
+  );
+  const meta = apiData?.data?.meta || {
+    total: 0,
+    limit: 10,
+    page: 1,
+    totalPage: 1,
+  };
 
   // Safe image URL helper
   const getImageUrl = (logo: string) => {
     if (!logo) return null;
     // Only prepend baseURL if it's a relative path and we're on client
-    if (isClient && !logo.startsWith('http') && !logo.startsWith('blob:')) {
+    if (isClient && !logo.startsWith("http") && !logo.startsWith("blob:")) {
       return baseURL + logo;
     }
     return logo;
   };
 
   const handleAddBrand = () => {
-    setBrandName('');
+    setBrandName("");
     setBrandImage(null);
     setBrandImagePreview(null);
     setAddDialogOpen(true);
@@ -138,24 +159,24 @@ const BrandList = () => {
 
     try {
       await deleteBrand(brandToDelete).unwrap();
-      toast.success('Brand deleted successfully');
+      toast.success("Brand deleted successfully");
       setDeleteDialogOpen(false);
       setBrandToDelete(null);
     } catch (error: unknown) {
-      console.error('Delete error:', error);
+      console.error("Delete error:", error);
       const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to delete brand');
+      toast.error(apiError?.data?.message || "Failed to delete brand");
     }
   };
 
   const handleCreate = async () => {
     if (!brandName.trim()) {
-      toast.error('Please enter brand name');
+      toast.error("Please enter brand name");
       return;
     }
 
     if (!brandImage) {
-      toast.error('Please upload brand logo');
+      toast.error("Please upload brand logo");
       return;
     }
 
@@ -168,25 +189,25 @@ const BrandList = () => {
         name: brandName.trim(),
       };
 
-      formData.append('data', JSON.stringify(brandData));
-      formData.append('logo', brandImage);
+      formData.append("data", JSON.stringify(brandData));
+      formData.append("logo", brandImage);
 
       await createBrand(formData).unwrap();
-      toast.success('Brand created successfully');
+      toast.success("Brand created successfully");
       setAddDialogOpen(false);
-      setBrandName('');
+      setBrandName("");
       setBrandImage(null);
       setBrandImagePreview(null);
     } catch (error: unknown) {
-      console.error('Create error:', error);
+      console.error("Create error:", error);
       const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to create brand');
+      toast.error(apiError?.data?.message || "Failed to create brand");
     }
   };
 
   const handleUpdate = async () => {
     if (!brandName.trim()) {
-      toast.error('Please enter brand name');
+      toast.error("Please enter brand name");
       return;
     }
 
@@ -200,28 +221,28 @@ const BrandList = () => {
         name: brandName.trim(),
       };
 
-      formData.append('data', JSON.stringify(brandData));
+      formData.append("data", JSON.stringify(brandData));
 
       // Only append logo if a new image was selected
       if (brandImage) {
-        formData.append('logo', brandImage);
+        formData.append("logo", brandImage);
       }
 
       await updateBrand({
         id: brandToEdit._id,
-        data: formData
+        data: formData,
       }).unwrap();
 
-      toast.success('Brand updated successfully');
+      toast.success("Brand updated successfully");
       setEditDialogOpen(false);
       setBrandToEdit(null);
-      setBrandName('');
+      setBrandName("");
       setBrandImage(null);
       setBrandImagePreview(null);
     } catch (error: unknown) {
-      console.error('Update error:', error);
+      console.error("Update error:", error);
       const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to update brand');
+      toast.error(apiError?.data?.message || "Failed to update brand");
     }
   };
 
@@ -229,14 +250,14 @@ const BrandList = () => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
         return;
       }
 
       // Validate file size (e.g., max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+        toast.error("Image size should be less than 5MB");
         return;
       }
 
@@ -249,7 +270,7 @@ const BrandList = () => {
   // Cleanup object URL on unmount
   useEffect(() => {
     return () => {
-      if (brandImagePreview && brandImagePreview.startsWith('blob:')) {
+      if (brandImagePreview && brandImagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(brandImagePreview);
       }
     };
@@ -257,7 +278,7 @@ const BrandList = () => {
 
   const ImageUploadArea = ({
     id,
-    imageUrl
+    imageUrl,
   }: {
     id: string;
     imageUrl: string | null;
@@ -286,9 +307,7 @@ const BrandList = () => {
                 priority={false}
               />
             </div>
-            <p className="text-sm text-gray-600">
-              Click to change image
-            </p>
+            <p className="text-sm text-gray-600">Click to change image</p>
           </>
         ) : (
           <>
@@ -296,7 +315,7 @@ const BrandList = () => {
               <Upload className="w-6 h-6 text-gray-900" />
             </div>
             <p className="text-sm text-gray-600 text-center">
-              Drop your Image here or{' '}
+              Drop your Image here or{" "}
               <span className="text-red-600 font-medium">Click to upload</span>
             </p>
           </>
@@ -327,7 +346,9 @@ const BrandList = () => {
           <div className="text-center">
             <p className="text-red-600 font-semibold">Error loading brands</p>
             <p className="mt-2 text-gray-600">
-              {error && 'data' in error ? JSON.stringify(error.data) : 'An error occurred'}
+              {error && "data" in error
+                ? JSON.stringify(error.data)
+                : "An error occurred"}
             </p>
           </div>
         </div>
@@ -338,7 +359,9 @@ const BrandList = () => {
   return (
     <div className="p-6">
       <div className="">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Brand List</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+          Brand List {meta.total > 0 && `(${meta.total})`}
+        </h1>
 
         <div className="bg-white rounded-lg shadow">
           {/* Header with Add Button and Search */}
@@ -365,10 +388,10 @@ const BrandList = () => {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            {filteredBrands.length === 0 ? (
+            {brands.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-gray-500 text-lg">No brands found</p>
-                {searchTerm && (
+                {debouncedSearchTerm && (
                   <p className="text-gray-400 text-sm mt-2">
                     Try adjusting your search term
                   </p>
@@ -378,25 +401,39 @@ const BrandList = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-200 border-b border-gray-300">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Logo</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Brand Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Created Date</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Action</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Logo
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Brand Name
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Created Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredBrands.map((brand, index) => (
+                  {brands.map((brand, index) => (
                     <tr
                       key={brand._id}
-                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${index === filteredBrands.length - 1 ? 'border-b-0' : ''
-                        }`}
+                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                        index === brands.length - 1 ? "border-b-0" : ""
+                      }`}
                     >
                       <td className="px-6 py-4">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center overflow-hidden">
                           {brand.logo ? (
                             <Image
-                              src={getImageUrl(brand.logo) || '/placeholder-image.png'}
+                              src={
+                                getImageUrl(brand.logo) ||
+                                "/placeholder-image.png"
+                              }
                               alt={brand.name}
                               width={40}
                               height={40}
@@ -408,13 +445,18 @@ const BrandList = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{brand.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {brand.name}
+                      </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${brand.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                          }`}>
-                          {brand.isActive ? 'Active' : 'Inactive'}
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            brand.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {brand.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
@@ -448,38 +490,52 @@ const BrandList = () => {
           </div>
 
           {/* Pagination */}
-          {meta && meta.totalPage > 1 && (
-            <div className="p-4 border-t border-gray-200 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="px-4 bg-white"
-              >
-                Prev
-              </Button>
-              {Array.from({ length: meta.totalPage }, (_, i) => i + 1).map((page) => (
+          {!isLoading && brands.length > 0 && (
+            <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Showing {(meta.page - 1) * meta.limit + 1} to{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}{" "}
+                brands
+              </div>
+              <div className="flex items-center gap-2">
                 <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  onClick={() => setCurrentPage(page)}
-                  className={
-                    currentPage === page
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-white"
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
                   }
+                  disabled={currentPage === 1 || isLoading}
+                  className="px-4 bg-white"
                 >
-                  {page}
+                  Prev
                 </Button>
-              ))}
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(prev => Math.min(meta.totalPage, prev + 1))}
-                disabled={currentPage === meta.totalPage}
-                className="px-4 bg-white"
-              >
-                Next
-              </Button>
+                {Array.from({ length: meta.totalPage }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                      disabled={isLoading}
+                      className={
+                        currentPage === page
+                          ? "bg-red-600 hover:bg-red-700 text-white"
+                          : "bg-white"
+                      }
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(meta.totalPage, prev + 1))
+                  }
+                  disabled={currentPage === meta.totalPage || isLoading}
+                  className="px-4 bg-white"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -489,7 +545,9 @@ const BrandList = () => {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Add Brand</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Add Brand
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -526,7 +584,7 @@ const BrandList = () => {
               className="flex-1 bg-red-700 hover:bg-red-800 text-white"
               disabled={isCreating}
             >
-              {isCreating ? 'Creating...' : 'Create Brand'}
+              {isCreating ? "Creating..." : "Create Brand"}
             </Button>
           </div>
         </DialogContent>
@@ -536,7 +594,9 @@ const BrandList = () => {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Edit Brand</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Edit Brand
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -552,11 +612,14 @@ const BrandList = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>
-                Brand Logo
-              </Label>
-              <ImageUploadArea id="edit-image-upload" imageUrl={brandImagePreview} />
-              <p className="text-xs text-gray-500">Leave empty to keep current logo</p>
+              <Label>Brand Logo</Label>
+              <ImageUploadArea
+                id="edit-image-upload"
+                imageUrl={brandImagePreview}
+              />
+              <p className="text-xs text-gray-500">
+                Leave empty to keep current logo
+              </p>
             </div>
           </div>
 
@@ -574,7 +637,7 @@ const BrandList = () => {
               className="flex-1 bg-red-700 hover:bg-red-800 text-white"
               disabled={isUpdating}
             >
-              {isUpdating ? 'Updating...' : 'Update Brand'}
+              {isUpdating ? "Updating..." : "Update Brand"}
             </Button>
           </div>
         </DialogContent>
@@ -586,8 +649,8 @@ const BrandList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the brand
-              and remove its data from the system.
+              This action cannot be undone. This will permanently delete the
+              brand and remove its data from the system.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -597,7 +660,7 @@ const BrandList = () => {
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

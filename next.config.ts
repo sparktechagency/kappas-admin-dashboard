@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         port: '7001', // Specify the port if needed
       },
       {
+        protocol: "http",
+        hostname: "35.183.138.114",
+        port: '3001',
+      },
+      {
         protocol: "https",
         hostname: "asif7001.binarybards.online",
         pathname: "/**",

@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { baseURL } from './BaseURL';
-import { getToken } from './storage';
+import { baseURL } from "./BaseURL";
+import { getToken } from "./storage";
 
 export const baseApi = createApi({
   reducerPath: "baseApi",
@@ -15,5 +15,20 @@ export const baseApi = createApi({
     },
   }),
   endpoints: () => ({}),
-  tagTypes: ["Category", "transaction", "users", "pushNotifications", "admin", "profile", "vendor", "notifications", "subcategory", "banner"],
+  tagTypes: [
+    "Category",
+    "transaction",
+    "users",
+    "pushNotifications",
+    "admin",
+    "profile",
+    "vendor",
+    "notifications",
+    "subcategory",
+    "banner",
+    "brand",
+    "advertisement",
+    "Users",
+    "faq",
+  ],
 });

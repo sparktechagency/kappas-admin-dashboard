@@ -9,36 +9,36 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Edit, Plus, Search, Trash2, Upload } from 'lucide-react';
-import Image from 'next/image';
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { useGetAllCategoryQuery } from '../../../features/category/categoryApi';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Edit, Plus, Search, Trash2, Upload } from "lucide-react";
+import Image from "next/image";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useGetAllCategoryQuery } from "../../../features/category/categoryApi";
 import {
   useCreateSubcategoryMutation,
   useDeleteSubcategoryMutation,
   useGetAllSubCategoryQuery,
-  useUpdateSubcategoryMutation
-} from '../../../features/subCategory/subCategoryApi';
-import { baseURL } from '../../../utils/BaseURL';
+  useUpdateSubcategoryMutation,
+} from "../../../features/subCategory/subCategoryApi";
+import { baseURL } from "../../../utils/BaseURL";
 
 interface SubCategory {
   _id: string;
@@ -74,6 +74,12 @@ interface SubCategoryApiResponse {
   success: boolean;
   message: string;
   data: {
+    meta?: {
+      total: number;
+      limit: number;
+      page: number;
+      totalPage: number;
+    };
     subCategorys: SubCategory[];
   };
 }
@@ -99,21 +105,29 @@ interface ApiError {
 }
 
 const SubCategoryList = () => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [currentPage] = useState<number>(1);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [limit] = useState<number>(10);
 
   const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [subCategoryToDelete, setSubCategoryToDelete] = useState<string | null>(null);
-  const [subCategoryToEdit, setSubCategoryToEdit] = useState<SubCategory | null>(null);
+  const [subCategoryToDelete, setSubCategoryToDelete] = useState<string | null>(
+    null
+  );
+  const [subCategoryToEdit, setSubCategoryToEdit] =
+    useState<SubCategory | null>(null);
 
   // Form states
-  const [subCategoryName, setSubCategoryName] = useState<string>('');
-  const [subCategoryDescription, setSubCategoryDescription] = useState<string>('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [subCategoryName, setSubCategoryName] = useState<string>("");
+  const [subCategoryDescription, setSubCategoryDescription] =
+    useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [subCategoryImage, setSubCategoryImage] = useState<File | null>(null);
-  const [subCategoryImagePreview, setSubCategoryImagePreview] = useState<string | null>(null);
+  const [subCategoryImagePreview, setSubCategoryImagePreview] = useState<
+    string | null
+  >(null);
   const [isClient, setIsClient] = useState<boolean>(false);
 
   // Set isClient to true after component mounts
@@ -121,45 +135,77 @@ const SubCategoryList = () => {
     setIsClient(true);
   }, []);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
   // API Hooks
-  const { data: categoryData, } = useGetAllCategoryQuery({
+  const { data: categoryData } = useGetAllCategoryQuery({
     page: currentPage,
     limit: 100, // Increased limit to get all categories for dropdown
-    searchTerm: '',
+    searchTerm: "",
   });
 
-  console.log('Category :', categoryData);
+  console.log("Category :", categoryData);
 
-  const { data: subCategoryData, isLoading: subCategoryLoading, isError: subCategoryIsError, error: subCategoryError } = useGetAllSubCategoryQuery({});
+  const {
+    data: subCategoryData,
+    isLoading: subCategoryLoading,
+    isError: subCategoryIsError,
+    error: subCategoryError,
+  } = useGetAllSubCategoryQuery({
+    page: currentPage,
+    limit: limit,
+    searchTerm: debouncedSearchTerm,
+  });
 
-  const [createSubCategory, { isLoading: isCreating }] = useCreateSubcategoryMutation();
-  const [updateSubCategory, { isLoading: isUpdating }] = useUpdateSubcategoryMutation();
-  const [deleteSubCategory, { isLoading: isDeleting }] = useDeleteSubcategoryMutation();
+  const [createSubCategory, { isLoading: isCreating }] =
+    useCreateSubcategoryMutation();
+  const [updateSubCategory, { isLoading: isUpdating }] =
+    useUpdateSubcategoryMutation();
+  const [deleteSubCategory, { isLoading: isDeleting }] =
+    useDeleteSubcategoryMutation();
 
   // Extract data from API responses
   const categoryApiData = categoryData as CategoryApiResponse | undefined;
-  const subCategoryApiData = subCategoryData as SubCategoryApiResponse | undefined;
+  const subCategoryApiData = subCategoryData as
+    | SubCategoryApiResponse
+    | undefined;
 
   // Memoize data
-  const categories = useMemo(() => categoryApiData?.data?.categorys || [], [categoryApiData?.data?.categorys]);
-  const subCategories = useMemo(() => subCategoryApiData?.data?.subCategorys || [], [subCategoryApiData?.data?.subCategorys]);
-
-  // Client-side filtering for subcategories
-  const filteredSubCategories = useMemo(() => {
-    if (!isClient) return subCategories;
-    if (!searchTerm) return subCategories;
-
-    return subCategories.filter((subCategory) =>
-      subCategory.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subCategory.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subCategory.categoryId.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [subCategories, searchTerm, isClient]);
+  const categories = useMemo(
+    () => categoryApiData?.data?.categorys || [],
+    [categoryApiData?.data?.categorys]
+  );
+  const subCategories = useMemo(
+    () => subCategoryApiData?.data?.subCategorys || [],
+    [subCategoryApiData?.data?.subCategorys]
+  );
+  const meta = subCategoryApiData?.data?.meta || {
+    total: 0,
+    limit: 10,
+    page: 1,
+    totalPage: 1,
+  };
 
   // Safe image URL helper
   const getImageUrl = (thumbnail: string) => {
     if (!thumbnail) return null;
-    if (isClient && !thumbnail.startsWith('http') && !thumbnail.startsWith('blob:')) {
+    if (
+      isClient &&
+      !thumbnail.startsWith("http") &&
+      !thumbnail.startsWith("blob:")
+    ) {
       return baseURL + thumbnail;
     }
     return thumbnail;
@@ -167,9 +213,9 @@ const SubCategoryList = () => {
 
   // Reset form function
   const resetForm = () => {
-    setSubCategoryName('');
-    setSubCategoryDescription('');
-    setSelectedCategoryId('');
+    setSubCategoryName("");
+    setSubCategoryDescription("");
+    setSelectedCategoryId("");
     setSubCategoryImage(null);
     setSubCategoryImagePreview(null);
   };
@@ -200,34 +246,34 @@ const SubCategoryList = () => {
 
     try {
       await deleteSubCategory(subCategoryToDelete).unwrap();
-      toast.success('Sub category deleted successfully');
+      toast.success("Sub category deleted successfully");
       setDeleteDialogOpen(false);
       setSubCategoryToDelete(null);
     } catch (error: unknown) {
-      console.error('Delete error:', error);
+      console.error("Delete error:", error);
       const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to delete sub category');
+      toast.error(apiError?.data?.message || "Failed to delete sub category");
     }
   };
 
   const handleCreate = async () => {
     if (!subCategoryName.trim()) {
-      toast.error('Please enter sub category name');
+      toast.error("Please enter sub category name");
       return;
     }
 
     if (!subCategoryDescription.trim()) {
-      toast.error('Please enter sub category description');
+      toast.error("Please enter sub category description");
       return;
     }
 
     if (!selectedCategoryId) {
-      toast.error('Please select a category');
+      toast.error("Please select a category");
       return;
     }
 
     if (!subCategoryImage) {
-      toast.error('Please upload sub category image');
+      toast.error("Please upload sub category image");
       return;
     }
 
@@ -239,33 +285,33 @@ const SubCategoryList = () => {
         categoryId: selectedCategoryId,
       };
 
-      formData.append('data', JSON.stringify(subCategoryData));
-      formData.append('thumbnail', subCategoryImage);
+      formData.append("data", JSON.stringify(subCategoryData));
+      formData.append("thumbnail", subCategoryImage);
 
       await createSubCategory(formData).unwrap();
-      toast.success('Sub category created successfully');
+      toast.success("Sub category created successfully");
       setAddDialogOpen(false);
       resetForm();
     } catch (error: unknown) {
-      console.error('Create error:', error);
+      console.error("Create error:", error);
       const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to create sub category');
+      toast.error(apiError?.data?.message || "Failed to create sub category");
     }
   };
 
   const handleUpdate = async () => {
     if (!subCategoryName.trim()) {
-      toast.error('Please enter sub category name');
+      toast.error("Please enter sub category name");
       return;
     }
 
     if (!subCategoryDescription.trim()) {
-      toast.error('Please enter sub category description');
+      toast.error("Please enter sub category description");
       return;
     }
 
     if (!selectedCategoryId) {
-      toast.error('Please select a category');
+      toast.error("Please select a category");
       return;
     }
 
@@ -279,38 +325,38 @@ const SubCategoryList = () => {
         categoryId: selectedCategoryId,
       };
 
-      formData.append('data', JSON.stringify(subCategoryData));
+      formData.append("data", JSON.stringify(subCategoryData));
 
       if (subCategoryImage) {
-        formData.append('thumbnail', subCategoryImage);
+        formData.append("thumbnail", subCategoryImage);
       }
 
       await updateSubCategory({
         id: subCategoryToEdit._id,
-        data: formData
+        data: formData,
       }).unwrap();
 
-      toast.success('Sub category updated successfully');
+      toast.success("Sub category updated successfully");
       setEditDialogOpen(false);
       setSubCategoryToEdit(null);
       resetForm();
     } catch (error: unknown) {
-      console.error('Update error:', error);
+      console.error("Update error:", error);
       const apiError = error as ApiError;
-      toast.error(apiError?.data?.message || 'Failed to update sub category');
+      toast.error(apiError?.data?.message || "Failed to update sub category");
     }
   };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+        toast.error("Image size should be less than 5MB");
         return;
       }
 
@@ -323,7 +369,10 @@ const SubCategoryList = () => {
   // Cleanup object URL on unmount
   useEffect(() => {
     return () => {
-      if (subCategoryImagePreview && subCategoryImagePreview.startsWith('blob:')) {
+      if (
+        subCategoryImagePreview &&
+        subCategoryImagePreview.startsWith("blob:")
+      ) {
         URL.revokeObjectURL(subCategoryImagePreview);
       }
     };
@@ -331,7 +380,7 @@ const SubCategoryList = () => {
 
   const ImageUploadArea = ({
     id,
-    imageUrl
+    imageUrl,
   }: {
     id: string;
     imageUrl: string | null;
@@ -360,9 +409,7 @@ const SubCategoryList = () => {
                 priority={false}
               />
             </div>
-            <p className="text-sm text-gray-600">
-              Click to change image
-            </p>
+            <p className="text-sm text-gray-600">Click to change image</p>
           </>
         ) : (
           <>
@@ -370,7 +417,7 @@ const SubCategoryList = () => {
               <Upload className="w-6 h-6 text-gray-900" />
             </div>
             <p className="text-sm text-gray-600 text-center">
-              Drop your Image here or{' '}
+              Drop your Image here or{" "}
               <span className="text-red-600 font-medium">Click to upload</span>
             </p>
           </>
@@ -399,10 +446,13 @@ const SubCategoryList = () => {
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-red-600 font-semibold">Error loading sub categories</p>
+            <p className="text-red-600 font-semibold">
+              Error loading sub categories
+            </p>
             <p className="mt-2 text-gray-600">
-              {subCategoryError && 'data' in subCategoryError ?
-                JSON.stringify(subCategoryError.data) : 'An error occurred'}
+              {subCategoryError && "data" in subCategoryError
+                ? JSON.stringify(subCategoryError.data)
+                : "An error occurred"}
             </p>
           </div>
         </div>
@@ -413,7 +463,9 @@ const SubCategoryList = () => {
   return (
     <div className="p-6">
       <div className="">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Sub Category List</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+          Sub Category List {meta.total > 0 && `(${meta.total})`}
+        </h1>
 
         <div className="bg-white rounded-lg shadow">
           {/* Header with Add Button and Search */}
@@ -440,10 +492,10 @@ const SubCategoryList = () => {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            {filteredSubCategories.length === 0 ? (
+            {subCategories.length === 0 ? (
               <div className="p-12 text-center">
                 <p className="text-gray-500 text-lg">No sub categories found</p>
-                {searchTerm && (
+                {debouncedSearchTerm && (
                   <p className="text-gray-400 text-sm mt-2">
                     Try adjusting your search term
                   </p>
@@ -453,26 +505,42 @@ const SubCategoryList = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-200 border-b border-gray-300">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Icon</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Sub Category Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Description</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Parent Category</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Action</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Icon
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Sub Category Name
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Description
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Parent Category
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredSubCategories.map((subCategory, index) => (
+                  {subCategories.map((subCategory, index) => (
                     <tr
                       key={subCategory._id}
-                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${index === filteredSubCategories.length - 1 ? 'border-b-0' : ''
-                        }`}
+                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                        index === subCategories.length - 1 ? "border-b-0" : ""
+                      }`}
                     >
                       <td className="px-6 py-4">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center overflow-hidden">
                           {subCategory.thumbnail ? (
                             <Image
-                              src={getImageUrl(subCategory.thumbnail) || '/placeholder-image.png'}
+                              src={
+                                getImageUrl(subCategory.thumbnail) ||
+                                "/placeholder-image.png"
+                              }
                               alt={subCategory.name}
                               width={40}
                               height={40}
@@ -484,7 +552,9 @@ const SubCategoryList = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{subCategory.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {subCategory.name}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
                         {subCategory.description}
                       </td>
@@ -492,10 +562,13 @@ const SubCategoryList = () => {
                         {subCategory.categoryId.name}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${subCategory.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                          }`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            subCategory.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
                           {subCategory.status}
                         </span>
                       </td>
@@ -525,6 +598,58 @@ const SubCategoryList = () => {
               </table>
             )}
           </div>
+
+          {/* Pagination Section */}
+          {!subCategoryLoading && subCategories.length > 0 && (
+            <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Showing {(meta.page - 1) * meta.limit + 1} to{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}{" "}
+                sub categories
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1 || subCategoryLoading}
+                  className="px-4 bg-white"
+                >
+                  Prev
+                </Button>
+                {Array.from({ length: meta.totalPage }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                      disabled={subCategoryLoading}
+                      className={
+                        currentPage === page
+                          ? "bg-red-600 hover:bg-red-700 text-white"
+                          : "bg-white"
+                      }
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(meta.totalPage, prev + 1))
+                  }
+                  disabled={
+                    currentPage === meta.totalPage || subCategoryLoading
+                  }
+                  className="px-4 bg-white"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -532,15 +657,20 @@ const SubCategoryList = () => {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Add Sub Category</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Add Sub Category
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2 w-full">
               <Label htmlFor="category-select">
                 Parent Category <span className="text-red-600">*</span>
               </Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger className='w-full'>
+              <Select
+                value={selectedCategoryId}
+                onValueChange={setSelectedCategoryId}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -582,7 +712,10 @@ const SubCategoryList = () => {
               <Label>
                 Sub Category Image <span className="text-red-600">*</span>
               </Label>
-              <ImageUploadArea id="image-upload" imageUrl={subCategoryImagePreview} />
+              <ImageUploadArea
+                id="image-upload"
+                imageUrl={subCategoryImagePreview}
+              />
             </div>
           </div>
 
@@ -600,7 +733,7 @@ const SubCategoryList = () => {
               className="flex-1 bg-red-700 hover:bg-red-800 text-white"
               disabled={isCreating}
             >
-              {isCreating ? 'Creating...' : 'Create'}
+              {isCreating ? "Creating..." : "Create"}
             </Button>
           </div>
         </DialogContent>
@@ -610,15 +743,20 @@ const SubCategoryList = () => {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Edit Sub Category</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Edit Sub Category
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2 w-full">
               <Label htmlFor="edit-category-select">
                 Parent Category <span className="text-red-600">*</span>
               </Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger className='w-full'>
+              <Select
+                value={selectedCategoryId}
+                onValueChange={setSelectedCategoryId}
+              >
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -657,11 +795,14 @@ const SubCategoryList = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>
-                Sub Category Image
-              </Label>
-              <ImageUploadArea id="edit-image-upload" imageUrl={subCategoryImagePreview} />
-              <p className="text-xs text-gray-500">Leave empty to keep current image</p>
+              <Label>Sub Category Image</Label>
+              <ImageUploadArea
+                id="edit-image-upload"
+                imageUrl={subCategoryImagePreview}
+              />
+              <p className="text-xs text-gray-500">
+                Leave empty to keep current image
+              </p>
             </div>
           </div>
 
@@ -679,7 +820,7 @@ const SubCategoryList = () => {
               className="flex-1 bg-red-700 hover:bg-red-800 text-white"
               disabled={isUpdating}
             >
-              {isUpdating ? 'Updating...' : 'Update'}
+              {isUpdating ? "Updating..." : "Update"}
             </Button>
           </div>
         </DialogContent>
@@ -691,8 +832,8 @@ const SubCategoryList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the sub category
-              and remove its data from the system.
+              This action cannot be undone. This will permanently delete the sub
+              category and remove its data from the system.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -702,7 +843,7 @@ const SubCategoryList = () => {
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
