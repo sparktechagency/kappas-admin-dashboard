@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "asif7001.binarybards.online",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.thecanuckmall.ca",
+        pathname: "/**",
       }
     ],
   },

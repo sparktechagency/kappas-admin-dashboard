@@ -227,7 +227,6 @@ const CategoryList = () => {
         id: categoryToEdit._id,
         data: formData
       }).unwrap();
-
       toast.success('Category updated successfully');
       setEditDialogOpen(false);
       setCategoryToEdit(null);
@@ -321,6 +320,8 @@ const CategoryList = () => {
     </div>
   );
 
+
+
   // Loading state
   if (isLoading) {
     return (
@@ -330,7 +331,7 @@ const CategoryList = () => {
     );
   }
 
-  // Error state
+  // Error state/
   if (isError) {
     return (
       <div className="p-6">
@@ -350,7 +351,6 @@ const CategoryList = () => {
     <div className="p-6">
       <div className="">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">Category List</h1>
-
         <div className="bg-white rounded-lg shadow">
           {/* Header with Add Button and Search */}
           <div className="p-6 flex items-center justify-between">

@@ -11,6 +11,10 @@ export const categoryApi = baseApi.injectEndpoints({
           limit,
           searchTerm: searchTerm || undefined, // Only include if not empty
         },
+        headers: {
+          "Content-Type": "application/json",
+
+        }
       }),
       providesTags: ['Category'],
     }),
@@ -28,6 +32,10 @@ export const categoryApi = baseApi.injectEndpoints({
         url: "/category/create",
         method: "POST",
         body: data,
+        headers: {
+          "Content-Type": "application/json",
+
+        }
       }),
       invalidatesTags: ['Category'],
     }),

@@ -25,6 +25,7 @@ import {
   User,
   Users,
   Wallet,
+  Notebook
 } from "lucide-react";
 import Image from 'next/image';
 import Link from "next/link";
@@ -61,6 +62,7 @@ const sidebars: SidebarItem[] = [
     subItems: [
       { name: "Change Password", path: "/settings/change-password", icon: Lock },
       { name: "Admin", path: "/settings/admin", icon: Shield },
+      { name: "Maintanance", path: "/settings/maintanance", icon: Notebook },
     ]
   },
   {
