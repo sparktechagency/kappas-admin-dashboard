@@ -30,5 +30,6 @@ export const baseApi = createApi({
     "advertisement",
     "Users",
     "faq",
+    "province"
   ],
 });

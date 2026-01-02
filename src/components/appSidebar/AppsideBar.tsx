@@ -55,6 +55,7 @@ const sidebars: SidebarItem[] = [
   { name: "Category", path: "/category", icon: FaCube },
   { name: "Sub Category", path: "/subCategory", icon: FaCubes },
   { name: "Brand", path: "/brand", icon: LiaTshirtSolid },
+  { name: "Provinces", path: "/provinces", icon: LiaTshirtSolid },
   // { name: "Slider", path: "/slider", icon: Users },
   { name: "Faq", path: "/faq", icon: FaQuoteLeft },
   { name: "Transaction", path: "/transaction", icon: Wallet },
@@ -146,8 +147,8 @@ export default function MainlandSidebar() {
                       <SidebarMenuButton
                         onClick={() => toggleExpand(item.name)}
                         className={`h-12 px-6 rounded-none transition-all duration-200 ${isActive(item.path)
-                            ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
-                            : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
+                          ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
+                          : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
                           }`}
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -165,8 +166,8 @@ export default function MainlandSidebar() {
                       <SidebarMenuButton
                         asChild
                         className={`h-12 px-6 rounded-none transition-all duration-200 ${isActive(item.path)
-                            ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
-                            : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
+                          ? "bg-[#AF1500] text-white hover:bg-[#AF1500] hover:text-white border-l-4 border-[#ff5722]"
+                          : "text-gray-300 hover:bg-[#3d2a3e] hover:text-white border-l-4 border-transparent"
                           }`}
                       >
                         <Link
@@ -190,8 +191,8 @@ export default function MainlandSidebar() {
                           <SidebarMenuSubButton
                             asChild
                             className={`h-12 px-6 pl-12 rounded-none transition-all duration-200 ${isActive(subItem.path)
-                                ? "bg-[#4a2d3e] text-white hover:bg-[#4a2d3e] border-l-4 border-[#ff5722]"
-                                : "bg-[#3d2535] text-white hover:bg-[#4a2d3e] hover:text-white border-l-4 border-transparent"
+                              ? "bg-[#4a2d3e] text-white hover:bg-[#4a2d3e] border-l-4 border-[#ff5722]"
+                              : "bg-[#3d2535] text-white hover:bg-[#4a2d3e] hover:text-white border-l-4 border-transparent"
                               }`}
                           >
                             <Link

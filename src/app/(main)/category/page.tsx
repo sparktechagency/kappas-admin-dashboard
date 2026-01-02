@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit, Plus, Search, Trash2, Upload } from 'lucide-react';
+import { Edit, Plus, Search, Trash2, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -41,6 +41,7 @@ interface Category {
   _id: string;
   name: string;
   thumbnail: string;
+  image?: string[];
   createdBy: string;
   subCategory: SubCategory[];
   description: string;
@@ -82,11 +83,27 @@ const CategoryList = () => {
   const [categoryName, setCategoryName] = useState<string>('');
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
   const [categoryImagePreview, setCategoryImagePreview] = useState<string | null>(null);
+  const [bannerImages, setBannerImages] = useState<File[]>([]);
+  const [bannerImagePreviews, setBannerImagePreviews] = useState<string[]>([]);
+  const [existingBannerImages, setExistingBannerImages] = useState<string[]>([]);
   const [isClient, setIsClient] = useState<boolean>(false);
+
+  // Cleanup all blob URLs
+  const cleanupBlobUrls = () => {
+    if (categoryImagePreview && categoryImagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(categoryImagePreview);
+    }
+    bannerImagePreviews.forEach(url => {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    });
+  };
 
   // Set isClient to true after component mounts
   useEffect(() => {
     setIsClient(true);
+    return cleanupBlobUrls;
   }, []);
 
   // API Hooks
@@ -109,7 +126,7 @@ const CategoryList = () => {
 
   // Client-side filtering as fallback - only on client side
   const filteredCategories = useMemo(() => {
-    if (!isClient) return categories; // Return original categories during SSR
+    if (!isClient) return categories;
     if (!searchTerm) return categories;
     return categories.filter((category) =>
       category.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -119,26 +136,48 @@ const CategoryList = () => {
   // Safe image URL helper
   const getImageUrl = (thumbnail: string) => {
     if (!thumbnail) return null;
-    // Only prepend baseURL if it's a relative path and we're on client
     if (isClient && !thumbnail.startsWith('http') && !thumbnail.startsWith('blob:')) {
       return baseURL + thumbnail;
     }
     return thumbnail;
   };
 
-  const handleAddCategory = () => {
+  const resetAllStates = () => {
+    cleanupBlobUrls();
     setCategoryName('');
     setCategoryImage(null);
     setCategoryImagePreview(null);
+    setBannerImages([]);
+    setBannerImagePreviews([]);
+    setExistingBannerImages([]);
+    setCategoryToEdit(null);
+  };
+
+  const handleAddCategory = () => {
+    resetAllStates();
     setAddDialogOpen(true);
   };
 
   const handleEditCategory = (category: Category) => {
+    resetAllStates();
+
     setCategoryToEdit(category);
     setCategoryName(category.name);
-    setCategoryImage(null);
-    const imageUrl = getImageUrl(category.thumbnail);
-    setCategoryImagePreview(imageUrl);
+
+    // Load existing thumbnail preview
+    if (category.thumbnail) {
+      const imageUrl = getImageUrl(category.thumbnail);
+      setCategoryImagePreview(imageUrl);
+    }
+
+    // Load existing banner images
+    if (category.image && category.image.length > 0) {
+      const bannerUrls = category.image
+        .map(img => getImageUrl(img))
+        .filter((url): url is string => url !== null);
+
+      setExistingBannerImages(bannerUrls);
+    }
     setEditDialogOpen(true);
   };
 
@@ -151,8 +190,8 @@ const CategoryList = () => {
     if (!categoryToDelete) return;
 
     try {
-      await deleteCategory(categoryToDelete).unwrap();
-      toast.success('Category deleted successfully');
+      const response = await deleteCategory(categoryToDelete).unwrap();
+      toast.success(response.message || 'Category deleted successfully');
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
     } catch (error: unknown) {
@@ -174,10 +213,8 @@ const CategoryList = () => {
     }
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
 
-      // Add the data as JSON string
       const categoryData = {
         name: categoryName.trim(),
         description: categoryName.trim(),
@@ -186,12 +223,15 @@ const CategoryList = () => {
       formData.append('data', JSON.stringify(categoryData));
       formData.append('thumbnail', categoryImage);
 
-      await createCategory(formData).unwrap();
-      toast.success('Category created successfully');
+      // Add multiple banner images - use 'bannerImages' as key if backend expects it
+      bannerImages.forEach((image, index) => {
+        formData.append(`image`, image);
+      });
+
+      const response = await createCategory(formData).unwrap();
+      toast.success(response.message || 'Category created successfully');
       setAddDialogOpen(false);
-      setCategoryName('');
-      setCategoryImage(null);
-      setCategoryImagePreview(null);
+      resetAllStates();
     } catch (error: unknown) {
       console.error('Create error:', error);
       const apiError = error as ApiError;
@@ -208,12 +248,16 @@ const CategoryList = () => {
     if (!categoryToEdit) return;
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
 
       const categoryData = {
         name: categoryName.trim(),
         description: categoryName.trim(),
+        // Include existing banner images that haven't been removed
+        existingBannerImages: existingBannerImages.map(url => {
+          // Extract just the filename from the full URL
+          return url.replace(baseURL, '');
+        })
       };
 
       formData.append('data', JSON.stringify(categoryData));
@@ -223,16 +267,18 @@ const CategoryList = () => {
         formData.append('thumbnail', categoryImage);
       }
 
-      await updateCategory({
+      // Add new banner images if any
+      bannerImages.forEach((image) => {
+        formData.append('image', image);
+      });
+
+      const response = await updateCategory({
         id: categoryToEdit._id,
         data: formData
       }).unwrap();
-      toast.success('Category updated successfully');
+      toast.success(response.message || 'Category updated successfully');
       setEditDialogOpen(false);
-      setCategoryToEdit(null);
-      setCategoryName('');
-      setCategoryImage(null);
-      setCategoryImagePreview(null);
+      resetAllStates();
     } catch (error: unknown) {
       console.error('Update error:', error);
       const apiError = error as ApiError;
@@ -242,96 +288,261 @@ const CategoryList = () => {
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (JPEG, PNG, etc.)');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast.error(`Image size should be less than 5MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+      return;
+    }
+
+    // Cleanup previous blob URL if exists
+    if (categoryImagePreview && categoryImagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(categoryImagePreview);
+    }
+
+    setCategoryImage(file);
+    const imageUrl = URL.createObjectURL(file);
+    setCategoryImagePreview(imageUrl);
+
+    // Clear the input value to allow uploading the same file again
+    e.target.value = '';
+  };
+
+  const handleBannerImagesUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    Array.from(files).forEach((file) => {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
+        toast.error(`${file.name} is not an image file`);
         return;
       }
 
-      // Validate file size (e.g., max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`${file.name} is larger than 5MB (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
         return;
       }
 
-      setCategoryImage(file);
-      const imageUrl = URL.createObjectURL(file);
-      setCategoryImagePreview(imageUrl);
+      validFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    });
+
+    if (validFiles.length === 0) return;
+
+    setBannerImages(prev => [...prev, ...validFiles]);
+    setBannerImagePreviews(prev => [...prev, ...newPreviews]);
+
+    // Clear the input value
+    e.target.value = '';
+  };
+
+  const removeBannerImage = (index: number, isExisting: boolean = false) => {
+    if (isExisting) {
+      // Remove from existing banners
+      const newExisting = [...existingBannerImages];
+      const urlToRevoke = newExisting[index];
+      newExisting.splice(index, 1);
+      setExistingBannerImages(newExisting);
+    } else {
+      // Remove from newly uploaded banners
+      setBannerImages(prev => prev.filter((_, i) => i !== index));
+
+      const urlToRevoke = bannerImagePreviews[index];
+      if (urlToRevoke && urlToRevoke.startsWith('blob:')) {
+        URL.revokeObjectURL(urlToRevoke);
+      }
+
+      setBannerImagePreviews(prev => prev.filter((_, i) => i !== index));
     }
   };
 
-  // Cleanup object URL on unmount
-  useEffect(() => {
-    return () => {
-      if (categoryImagePreview && categoryImagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(categoryImagePreview);
-      }
-    };
-  }, [categoryImagePreview]);
+  const removeExistingBannerImage = (index: number) => {
+    removeBannerImage(index, true);
+  };
 
+  // Image Upload Component
   const ImageUploadArea = ({
     id,
-    imageUrl
+    imageUrl,
+    label = "Category Image"
   }: {
     id: string;
     imageUrl: string | null;
+    label?: string;
   }) => (
-    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-      <input
-        type="file"
-        id={id}
-        className="hidden"
-        accept="image/*"
-        onChange={handleImageUpload}
-      />
-      <label
-        htmlFor={id}
-        className="flex flex-col items-center justify-center cursor-pointer"
-      >
-        {imageUrl ? (
-          <>
-            <div className="mb-3">
-              <Image
-                height={1000}
-                width={1000}
-                src={imageUrl}
-                alt="Category preview"
-                className="w-32 h-32 object-cover rounded-lg"
-                priority={false}
-              />
-            </div>
-            <p className="text-sm text-gray-600">
-              Click to change image
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="w-16 h-16 rounded-full border-2 border-gray-900 flex items-center justify-center mb-3">
-              <Upload className="w-6 h-6 text-gray-900" />
-            </div>
-            <p className="text-sm text-gray-600 text-center">
-              Drop your Image here or{' '}
-              <span className="text-red-600 font-medium">Click to upload</span>
-            </p>
-          </>
-        )}
-      </label>
+    <div className="space-y-2">
+      <Label>
+        {label} <span className="text-red-600">*</span>
+      </Label>
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+        <input
+          type="file"
+          id={id}
+          className="hidden"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+        <label
+          htmlFor={id}
+          className="flex flex-col items-center justify-center cursor-pointer"
+        >
+          {imageUrl ? (
+            <>
+              <div className="mb-3">
+                <div className="relative w-32 h-32 mx-auto">
+                  <Image
+                    src={imageUrl}
+                    alt="Category preview"
+                    fill
+                    className="object-cover rounded-lg"
+                    sizes="128px"
+                    priority={false}
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-gray-600">
+                Click to change image
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-full border-2 border-gray-900 flex items-center justify-center mb-3">
+                <Upload className="w-6 h-6 text-gray-900" />
+              </div>
+              <p className="text-sm text-gray-600 text-center">
+                Drop your Image here or{' '}
+                <span className="text-red-600 font-medium">Click to upload</span>
+              </p>
+            </>
+          )}
+        </label>
+      </div>
     </div>
   );
 
+  // Banner Images Upload Component
+  const BannerImagesUploadArea = ({
+    id,
+    existingPreviews = [],
+    newPreviews = []
+  }: {
+    id: string;
+    existingPreviews?: string[];
+    newPreviews?: string[];
+  }) => {
+    const allPreviews = [...existingPreviews, ...newPreviews];
 
+    return (
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label>Category Banner Images</Label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <input
+              type="file"
+              id={id}
+              className="hidden"
+              accept="image/*"
+              multiple
+              onChange={handleBannerImagesUpload}
+            />
+            <label
+              htmlFor={id}
+              className="flex flex-col items-center justify-center cursor-pointer"
+            >
+              <div className="w-16 h-16 rounded-full border-2 border-gray-900 flex items-center justify-center mb-3">
+                <Upload className="w-6 h-6 text-gray-900" />
+              </div>
+              <p className="text-sm text-gray-600 text-center">
+                Drop your Images here or{' '}
+                <span className="text-red-600 font-medium">Click to upload</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-1">You can select multiple images</p>
+            </label>
+          </div>
+        </div>
+
+        {(allPreviews.length > 0) && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Banner Previews:</p>
+            <div className="grid grid-cols-3 gap-3">
+              {/* Existing banner images */}
+              {existingPreviews.map((preview, index) => (
+                <div key={`existing-${index}`} className="relative group">
+                  <div className="relative w-full h-24">
+                    <Image
+                      src={preview}
+                      alt={`Existing Banner ${index + 1}`}
+                      fill
+                      className="object-cover rounded-lg"
+                      sizes="(max-width: 200px) 100vw, 200px"
+                      priority={false}
+                    />
+                  </div>
+                  <div className="absolute top-1 right-1 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => removeExistingBannerImage(index)}
+                      className="bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Newly uploaded banner images */}
+              {newPreviews.map((preview, index) => (
+                <div key={`new-${index}`} className="relative group">
+                  <div className="relative w-full h-24">
+                    <Image
+                      src={preview}
+                      alt={`New Banner ${index + 1}`}
+                      fill
+                      className="object-cover rounded-lg"
+                      sizes="(max-width: 200px) 100vw, 200px"
+                      priority={false}
+                    />
+                  </div>
+                  <div className="absolute top-1 right-1 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => removeBannerImage(index)}
+                      className="bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Loading state
   if (isLoading) {
-    return (
-      <>
-        <CustomLoading />
-      </>
-    );
+    return <CustomLoading />;
   }
 
-  // Error state/
+  // Error state
   if (isError) {
     return (
       <div className="p-6">
@@ -346,6 +557,7 @@ const CategoryList = () => {
       </div>
     );
   }
+
 
   return (
     <div className="p-6">
@@ -390,6 +602,7 @@ const CategoryList = () => {
                 <thead>
                   <tr className="bg-gray-200 border-b border-gray-300">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Icon</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Banner Images</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Category Name</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Sub Categories</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Action</th>
@@ -405,16 +618,43 @@ const CategoryList = () => {
                       <td className="px-6 py-4">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center overflow-hidden">
                           {category.thumbnail ? (
-                            <Image
-                              src={getImageUrl(category.thumbnail) || '/placeholder-image.png'}
-                              alt={category.name}
-                              width={40}
-                              height={40}
-                              className="w-full h-full object-cover"
-                              priority={false}
-                            />
+                            <div className="relative w-full h-full">
+                              <Image
+                                src={getImageUrl(category.thumbnail) || '/placeholder-image.png'}
+                                alt={category.name}
+                                fill
+                                className="object-cover"
+                                sizes="40px"
+                                priority={false}
+                              />
+                            </div>
                           ) : (
                             <span className="text-xl">📁</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-1">
+                          {category.image && category.image.length > 0 ? (
+                            category.image.slice(0, 3).map((banner, idx) => (
+                              <div key={idx} className="relative w-8 h-8 bg-gray-100 rounded overflow-hidden">
+                                <Image
+                                  src={getImageUrl(banner) || '/placeholder-image.png'}
+                                  alt={`Banner ${idx + 1}`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="32px"
+                                  priority={false}
+                                />
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-xs text-gray-400">No banners</span>
+                          )}
+                          {category.image && category.image.length > 3 && (
+                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                              <span className="text-xs text-gray-600">+{category.image.length - 3}</span>
+                            </div>
                           )}
                         </div>
                       </td>
@@ -489,7 +729,7 @@ const CategoryList = () => {
 
       {/* Add Category Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Add Category</DialogTitle>
           </DialogHeader>
@@ -506,18 +746,25 @@ const CategoryList = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>
-                Category Image <span className="text-red-600">*</span>
-              </Label>
-              <ImageUploadArea id="image-upload" imageUrl={categoryImagePreview} />
-            </div>
+            <ImageUploadArea
+              id="image-upload"
+              imageUrl={categoryImagePreview}
+              label="Category Image"
+            />
+
+            <BannerImagesUploadArea
+              id="banner-upload"
+              newPreviews={bannerImagePreviews}
+            />
           </div>
 
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => setAddDialogOpen(false)}
+              onClick={() => {
+                setAddDialogOpen(false);
+                resetAllStates();
+              }}
               className="flex-1 border-red-600 text-red-600 hover:bg-red-50"
               disabled={isCreating}
             >
@@ -536,7 +783,7 @@ const CategoryList = () => {
 
       {/* Edit Category Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Edit Category</DialogTitle>
           </DialogHeader>
@@ -553,18 +800,26 @@ const CategoryList = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>
-                Category Image <span className="text-red-600">*</span>
-              </Label>
-              <ImageUploadArea id="edit-image-upload" imageUrl={categoryImagePreview} />
-            </div>
+            <ImageUploadArea
+              id="edit-image-upload"
+              imageUrl={categoryImagePreview}
+              label="Category Image"
+            />
+
+            <BannerImagesUploadArea
+              id="edit-banner-upload"
+              existingPreviews={existingBannerImages}
+              newPreviews={bannerImagePreviews}
+            />
           </div>
 
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => setEditDialogOpen(false)}
+              onClick={() => {
+                setEditDialogOpen(false);
+                resetAllStates();
+              }}
               className="flex-1 border-red-600 text-red-600 hover:bg-red-50"
               disabled={isUpdating}
             >
