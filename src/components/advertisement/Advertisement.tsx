@@ -11,12 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+
 import {
   useGetAdvertisementCostQuery,
   useUpdateAdvertisementCostMutation,
 } from "../../features/advertisement/advertisementApi";
 import { TbCurrencyDollarCanadian } from "react-icons/tb";
+import toast from 'react-hot-toast';
 
 interface AdvertisementApiResponse {
   success: boolean;

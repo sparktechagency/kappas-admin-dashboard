@@ -7,7 +7,7 @@ export const maintananceApi = baseApi.injectEndpoints({
         url: `/settings/is-under-maintenance`,
         method: "GET",
       }),
-      providesTags: [""],
+      providesTags: ["maintanance"],
     }),
 
     updateMaintainance: builder.mutation({
@@ -16,7 +16,7 @@ export const maintananceApi = baseApi.injectEndpoints({
         method: "PATCH",
         body: data
       }),
-      providesTags: [""],
+      providesTags: ["maintanance"],
     }),
 
   }),

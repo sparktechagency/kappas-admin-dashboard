@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Edit, Plus, Search, Trash2, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+
 import CustomLoading from '../../../components/Loading/CustomLoading';
 import {
   useCreateCategoryMutation,
@@ -31,6 +31,7 @@ import {
   useUpdateCategoryMutation
 } from '../../../features/category/categoryApi';
 import { baseURL } from '../../../utils/BaseURL';
+import toast from 'react-hot-toast';
 
 interface SubCategory {
   _id: string;

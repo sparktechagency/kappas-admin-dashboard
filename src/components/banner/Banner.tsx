@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label";
 import { RefreshCw, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+
 import {
   useCreateBannerMutation,
   useGetAllBannerQuery,
 } from "../../features/banner/banner";
 import { baseURL } from "../../utils/BaseURL";
+import toast from 'react-hot-toast';
 
 interface BannerApiResponse {
   success: boolean;

@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, Plus, Search, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import toast from 'react-hot-toast';
 import { useGetAllCategoryQuery } from "../../../features/category/categoryApi";
 import {
   useCreateSubcategoryMutation,
@@ -156,7 +156,6 @@ const SubCategoryList = () => {
     searchTerm: "",
   });
 
-  console.log("Category :", categoryData);
 
   const {
     data: subCategoryData,
@@ -250,7 +249,7 @@ const SubCategoryList = () => {
       setDeleteDialogOpen(false);
       setSubCategoryToDelete(null);
     } catch (error: unknown) {
-      console.error("Delete error:", error);
+      // console.error("Delete error:", error);
       const apiError = error as ApiError;
       toast.error(apiError?.data?.message || "Failed to delete sub category");
     }
@@ -293,7 +292,7 @@ const SubCategoryList = () => {
       setAddDialogOpen(false);
       resetForm();
     } catch (error: unknown) {
-      console.error("Create error:", error);
+      // console.error("Create error:", error);
       const apiError = error as ApiError;
       toast.error(apiError?.data?.message || "Failed to create sub category");
     }
@@ -529,9 +528,8 @@ const SubCategoryList = () => {
                   {subCategories.map((subCategory, index) => (
                     <tr
                       key={subCategory._id}
-                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                        index === subCategories.length - 1 ? "border-b-0" : ""
-                      }`}
+                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${index === subCategories.length - 1 ? "border-b-0" : ""
+                        }`}
                     >
                       <td className="px-6 py-4">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center overflow-hidden">
@@ -559,15 +557,14 @@ const SubCategoryList = () => {
                         {subCategory.description}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
-                        {subCategory.categoryId.name}
+                        {subCategory?.categoryId?.name}
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            subCategory.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${subCategory.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {subCategory.status}
                         </span>

@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useEffect, useState } from "react";
-import { toast } from "sonner";
+
 import {
   useCreateProvinceMutation,
   useDeleteProvinceMutation,
@@ -31,6 +31,7 @@ import {
   useGetAllProvincesQuery,
 } from "../../../features/provinces/provincesApi";
 import { baseURL } from "../../../utils/BaseURL";
+import toast from 'react-hot-toast';
 
 interface Province {
   _id: string;

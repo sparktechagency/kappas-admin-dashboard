@@ -22,13 +22,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import {
   useCreateFaqMutation,
   useDeleteFaqMutation,
   useGetAllFaqQuery,
   useUpdateFaqMutation,
 } from '../../../features/faq/faqApi';
+import toast from 'react-hot-toast';
 
 interface FAQ {
   _id: string;

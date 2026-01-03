@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Edit, Plus, Search, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+
 import {
   useCreateBrandMutation,
   useDeleteBrandMutation,
@@ -30,6 +30,7 @@ import {
   useUpdateCetgoryMutation,
 } from "../../../features/brand/brandApi";
 import { baseURL } from "../../../utils/BaseURL";
+import toast from 'react-hot-toast';
 
 interface Brand {
   _id: string;
@@ -73,9 +74,7 @@ const BrandList = () => {
   const [brandToEdit, setBrandToEdit] = useState<Brand | null>(null);
   const [brandName, setBrandName] = useState<string>("");
   const [brandImage, setBrandImage] = useState<File | null>(null);
-  const [brandImagePreview, setBrandImagePreview] = useState<string | null>(
-    null
-  );
+  const [brandImagePreview, setBrandImagePreview] = useState<string | null>(null);
   const [isClient, setIsClient] = useState<boolean>(false);
 
   // Set isClient to true after component mounts

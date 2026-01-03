@@ -22,8 +22,8 @@ const Page = () => {
 
   // Set default values from API response
   useEffect(() => {
-    if (data?.data?.isUnderMaintenance !== undefined) {
-      setIsEnabled(data.data.isUnderMaintenance.status);
+    if (data?.data?.isUnderMaintenance.status !== undefined) {
+      setIsEnabled(data?.data.isUnderMaintenance.status);
 
       // Set the date if endAt exists
       if (data.data.isUnderMaintenance.endAt) {

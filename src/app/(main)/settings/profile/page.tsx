@@ -10,9 +10,9 @@ import {
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { useGetProfileQuery, useUpdateProfileMutation } from '../../../../features/profile/profileApi';
 import { baseURL } from '../../../../utils/BaseURL';
+import toast from 'react-hot-toast';
 
 interface EditFormData {
   full_name: string;
