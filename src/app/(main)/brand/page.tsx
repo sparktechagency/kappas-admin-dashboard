@@ -23,6 +23,7 @@ import { Edit, Plus, Search, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
+import toast from 'react-hot-toast';
 import {
   useCreateBrandMutation,
   useDeleteBrandMutation,
@@ -30,7 +31,6 @@ import {
   useUpdateCetgoryMutation,
 } from "../../../features/brand/brandApi";
 import { baseURL } from "../../../utils/BaseURL";
-import toast from 'react-hot-toast';
 
 interface Brand {
   _id: string;
@@ -77,7 +77,7 @@ const BrandList = () => {
   const [brandImagePreview, setBrandImagePreview] = useState<string | null>(null);
   const [isClient, setIsClient] = useState<boolean>(false);
 
-  // Set isClient to true after component mounts
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -201,6 +201,7 @@ const BrandList = () => {
       console.error("Create error:", error);
       const apiError = error as ApiError;
       toast.error(apiError?.data?.message || "Failed to create brand");
+      console.log(apiError);
     }
   };
 
@@ -353,7 +354,7 @@ const BrandList = () => {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="p-6">
@@ -421,9 +422,8 @@ const BrandList = () => {
                   {brands.map((brand, index) => (
                     <tr
                       key={brand._id}
-                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                        index === brands.length - 1 ? "border-b-0" : ""
-                      }`}
+                      className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${index === brands.length - 1 ? "border-b-0" : ""
+                        }`}
                     >
                       <td className="px-6 py-4">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center overflow-hidden">
@@ -449,11 +449,10 @@ const BrandList = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            brand.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${brand.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {brand.isActive ? "Active" : "Inactive"}
                         </span>
