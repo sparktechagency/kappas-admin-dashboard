@@ -33,7 +33,7 @@ export const provincesApi = baseApi.injectEndpoints({
     }),
 
     editProvince: builder.mutation({
-      query: (data, id) => ({
+      query: ({ data, id }) => ({
         url: `/province/${id}`,
         method: "PATCH",
         body: data,
